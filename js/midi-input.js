@@ -22,20 +22,74 @@ const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 
 // today's browsers, but Web MIDI polyfills (such as the one in the iOS "Web
 // MIDI Browser" app) may give a Map without values(), a plain object, an
 // array, or (old spec) a function returning an array.
+//
+// Their values()/keys() may also return an old-style iterator (an object with
+// next() but no Symbol.iterator), which Array.from() silently reads as empty.
+// So every strategy is tried until one finds ports.
 export function listPorts(ports) {
   if (!ports) return [];
-  if (typeof ports === 'function') return Array.from(ports() ?? []);
+  if (typeof ports === 'function') return drain(ports());
   if (Array.isArray(ports)) return ports;
-  if (typeof ports.values === 'function') return Array.from(ports.values());
-  if (typeof ports.forEach === 'function') {
-    const list = [];
-    ports.forEach((port) => list.push(port));
-    return list;
+
+  const isPort = (p) => p && typeof p === 'object' && ('onmidimessage' in p || 'name' in p || 'id' in p);
+  const strategies = [
+    () => typeof ports.values === 'function' && drain(ports.values()),
+    () => {
+      if (typeof ports.forEach !== 'function') return [];
+      const list = [];
+      ports.forEach((a, b) => list.push(isPort(a) ? a : b)); // (value, key) or (key, value)
+      return list;
+    },
+    () => typeof ports.entries === 'function' && drain(ports.entries()).map((e) => (isPort(e?.[1]) ? e[1] : e?.[0])),
+    () => typeof ports.keys === 'function' && typeof ports.get === 'function' && drain(ports.keys()).map((k) => ports.get(k)),
+    () => Object.values(ports),
+  ];
+  for (const strategy of strategies) {
+    let found = [];
+    try {
+      found = (strategy() || []).filter(isPort);
+    } catch {
+      // try the next way
+    }
+    if (found.length) return found;
   }
-  if (typeof ports.size === 'number' && typeof ports.get === 'function' && typeof ports.keys === 'function') {
-    return Array.from(ports.keys(), (key) => ports.get(key));
+  return [];
+}
+
+// For the diagnostics: what calling map[method]() returns.
+function describeIterator(map, method) {
+  try {
+    if (typeof map?.[method] !== 'function') return `not a function (${typeof map?.[method]})`;
+    const it = map[method]();
+    const kind = Array.isArray(it) ? 'array' : typeof it;
+    return `${kind}, iterable=${typeof it?.[Symbol.iterator] === 'function'}, next=${typeof it?.next === 'function'}, items=${drain(it).length}`;
+  } catch (err) {
+    return `throws ${err.message}`;
   }
-  return Object.values(ports).filter((port) => port && typeof port === 'object');
+}
+
+function countForEach(map) {
+  try {
+    let n = 0;
+    map?.forEach?.(() => n++);
+    return n;
+  } catch (err) {
+    return `throws ${err.message}`;
+  }
+}
+
+// Turns any iterable, old-style iterator or array-like into an array.
+function drain(it) {
+  if (!it) return [];
+  if (Array.isArray(it)) return it;
+  if (typeof it[Symbol.iterator] === 'function') return Array.from(it);
+  if (typeof it.next === 'function') {
+    const out = [];
+    for (let r = it.next(), guard = 0; r && !r.done && guard < 1000; r = it.next(), guard++) out.push(r.value);
+    return out;
+  }
+  if (typeof it.length === 'number') return Array.from(it);
+  return [];
 }
 
 export function noteName(note) {
@@ -150,6 +204,7 @@ export class MidiInput {
       `inputs: ${type} ${proto?.constructor?.name ?? ''} size=${map?.size ?? map?.length ?? '?'}`,
       `inputs keys: ${map && typeof map === 'object' ? Object.keys(map).slice(0, 8).join(', ') || '(none)' : '-'}`,
       `inputs methods: ${methods.slice(0, 12).join(', ') || '(none)'}`,
+      `values(): ${describeIterator(map, 'values')}; forEach items: ${countForEach(map)}`,
       `listed: ${inputCount} input(s), ${outputs.length} output(s)${outputs.length ? ` [${outputs.map((o) => o.name).join(', ')}]` : ''}`,
       `checks: ${d.refreshes}, statechange events: ${d.stateChanges}, raw messages: ${d.rawMessages}${d.lastRaw ? ` (last: ${d.lastRaw})` : ''}`,
       // Web MIDI Browser's add-on receives data through global _callback_* functions.

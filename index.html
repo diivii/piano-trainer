@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
   <title>Klaviertrainer</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link id="app-css" rel="stylesheet">
   <script>
     // Show startup problems on the page itself (there's no console on the iPad).
     (() => {
@@ -15,7 +15,7 @@
         box.textContent = problems.join('\n');
         box.hidden = false;
       };
-      const show = (text) => {
+      window.showStartupError = (text) => {
         problems.push(text);
         render();
       };
@@ -28,200 +28,59 @@
           e.preventDefault();
           return;
         }
-        show(`Fehler: ${e.message} (${(e.filename || '').split('/').pop()}:${e.lineno})`);
+        if (e.message) showStartupError(`Fehler: ${e.message} (${(e.filename || '').split('/').pop()}:${e.lineno})`);
       });
-      window.addEventListener('unhandledrejection', (e) => show(`Fehler: ${e.reason?.message || e.reason}`));
-      window.addEventListener('load', () => {
-        if (location.protocol === 'file:') {
-          show('Diese Seite wurde als Datei geöffnet. Starte sie mit start-server.cmd und öffne http://localhost:8000.');
-        } else if (!window.opensheetmusicdisplay) {
-          show('Die Notenbibliothek (vendor/opensheetmusicdisplay.min.js) konnte nicht geladen werden.');
-        } else {
-          // Give slower devices a moment before concluding the app didn't start.
-          setTimeout(() => {
-            if (!window.pianoTrainer) show('Die App konnte nicht starten. Bitte die Seite neu laden.');
-          }, 3000);
-        }
-        render(); // errors from before the page was parsed
-      });
+      window.addEventListener('unhandledrejection', (e) => showStartupError(`Fehler: ${e.reason?.message || e.reason}`));
+      window.addEventListener('DOMContentLoaded', render);
     })();
   </script>
-  <!-- OpenSheetMusicDisplay 2.2.1 (BSD-3, see vendor/OSMD-LICENSE.txt), bundled so no CDN is needed -->
-  <script src="vendor/opensheetmusicdisplay.min.js"></script>
 </head>
 <body>
   <div id="startup-error" class="startup-error" hidden></div>
+  <div id="app"></div>
 
-  <header class="app-header">
-    <button id="back" class="icon-button" type="button" hidden aria-label="Zurück zur Bibliothek">‹ Bibliothek</button>
-    <h1 id="app-title">Klaviertrainer</h1>
-    <span id="now-playing" class="now-playing" hidden></span>
-    <button id="midi-pill" class="midi-pill" type="button" data-state="off">
-      <span class="dot"></span><span data-pill-label>Kein Klavier</span>
-    </button>
-  </header>
+  <script>
+    // Bootstrap. This page stays small and rarely changes; everything else is
+    // loaded with the current version in its address, so browsers can't keep
+    // using an outdated copy. version.json is written when the site is
+    // published (tools/stamp_version.py); locally it doesn't exist and files
+    // load without a version.
+    (async () => {
+      if (location.protocol === 'file:') {
+        showStartupError('Diese Seite wurde als Datei geöffnet. Starte sie mit start-server.cmd und öffne http://localhost:8000.');
+        return;
+      }
+      const load = (src, attrs = {}) => new Promise((resolve, reject) => {
+        const script = Object.assign(document.createElement('script'), { src, ...attrs });
+        script.onload = resolve;
+        script.onerror = () => reject(new Error(`${src} konnte nicht geladen werden`));
+        document.body.append(script);
+      });
 
-  <!-- ===== Library ===== -->
-  <main id="library-view" class="library-view">
-    <div class="library-head">
-      <h2>Deine Stücke</h2>
-      <div class="library-actions">
-        <button id="backup-open" class="button" type="button">Sicherung</button>
-        <label class="button primary">
-          + Stück importieren
-          <input id="file" type="file" accept=".musicxml,.xml,.mxl" hidden>
-        </label>
-      </div>
-    </div>
-    <p class="hint">MusicXML-Dateien (.musicxml, .xml, .mxl). Stücke und Fortschritt werden auf diesem Gerät gespeichert.</p>
-    <p id="backup-reminder" class="hint warn" hidden></p>
-    <div id="library" class="library"></div>
-  </main>
+      try {
+        let version = '';
+        try {
+          const res = await fetch('version.json', { cache: 'no-store' });
+          if (res.ok) version = (await res.json()).version || '';
+        } catch {
+          // no version: load files as they are
+        }
+        const v = version ? `?v=${version}` : '';
+        window.appVersion = version || 'lokal';
 
-  <!-- ===== Practice ===== -->
-  <main id="practice-view" class="practice-view" hidden>
-    <section class="toolbar">
-      <div class="segmented" data-setting="mode">
-        <button type="button" data-value="wait">Warten</button>
-        <button type="button" data-value="tempo">Tempo</button>
-      </div>
-      <div class="segmented" data-setting="hands">
-        <button type="button" data-value="left">Links</button>
-        <button type="button" data-value="both">Beide</button>
-        <button type="button" data-value="right">Rechts</button>
-      </div>
-      <div class="field">
-        <button id="tempo-down" class="icon-button" type="button" aria-label="Langsamer">−</button>
-        <input id="tempo" type="number" min="20" max="240" inputmode="numeric">
-        <button id="tempo-up" class="icon-button" type="button" aria-label="Schneller">+</button>
-        <span class="unit">BPM <small id="score-tempo"></small></span>
-      </div>
-      <div class="toolbar-end">
-        <button id="listen" class="button" type="button">▶ Anhören</button>
-        <button id="settings-open" class="button" type="button" aria-haspopup="true">
-          ⚙ <span id="settings-summary">Takte 1–1</span>
-        </button>
-        <button id="focus" class="icon-button" type="button" aria-label="Fokusmodus">⤢</button>
-        <button id="restart" class="button primary" type="button">Neustart</button>
-      </div>
+        const css = document.getElementById('app-css');
+        css.href = `css/style.css${v}`;
+        const html = await fetch(`app.html${v}`, { cache: 'no-cache' });
+        if (!html.ok) throw new Error(`app.html: ${html.status}`);
+        document.getElementById('app').innerHTML = await html.text();
 
-      <div id="settings-panel" class="popover" hidden>
-        <div class="popover-row">
-          <span class="popover-label">Takte</span>
-          <input id="from-bar" type="number" min="1" value="1" inputmode="numeric">
-          <span>–</span>
-          <input id="to-bar" type="number" min="1" value="1" inputmode="numeric">
-          <button id="whole-piece" class="button" type="button">Ganzes Stück</button>
-        </div>
-        <div class="popover-row">
-          <span class="popover-label">Üben</span>
-          <button type="button" class="toggle" data-toggle="loop">Wiederholen</button>
-          <button type="button" class="toggle" data-toggle="hints">Tastenhilfe</button>
-          <button type="button" class="toggle tempo-only" data-toggle="metronome">Metronom</button>
-        </div>
-        <div class="popover-row">
-          <span class="popover-label">Anhören</span>
-          <div class="segmented" data-setting="sound">
-            <button type="button" data-value="piano">Klavier</button>
-            <button type="button" data-value="device">iPad</button>
-          </div>
-        </div>
-        <div class="popover-row">
-          <span class="popover-label">Noten</span>
-          <button id="zoom-out" class="icon-button" type="button" aria-label="Kleinere Noten">A−</button>
-          <button id="zoom-in" class="icon-button" type="button" aria-label="Größere Noten">A+</button>
-        </div>
-        <div class="popover-row">
-          <span class="popover-label">Tastatur</span>
-          <div class="segmented" data-setting="keyboard">
-            <button type="button" data-value="normal">Normal</button>
-            <button type="button" data-value="strip">Schmal</button>
-          </div>
-        </div>
-        <p class="hint">Tipp: Tippe auf einen Takt in den Noten, um dort zu beginnen; tippe auf einen zweiten Takt, um diesen Abschnitt zu wiederholen.</p>
-      </div>
-    </section>
-
-    <section class="stats">
-      <div class="progress"><div id="progress-bar"></div></div>
-      <div id="stats" class="stat-list"></div>
-      <button id="keyboard-toggle" class="icon-button small" type="button" aria-label="Tastaturgröße">⌨</button>
-    </section>
-
-    <div class="score-wrap">
-      <section id="score" class="score"></section>
-      <div id="feedback" class="feedback" hidden></div>
-      <div id="section-chip" class="section-chip" hidden></div>
-      <div id="message" class="message" hidden></div>
-      <div id="results" class="results" hidden></div>
-      <div class="focus-controls">
-        <button id="focus-listen" class="icon-button" type="button" aria-label="Anhören">▶</button>
-        <button id="focus-restart" class="icon-button" type="button" aria-label="Neustart">↻</button>
-        <button id="focus-exit" class="icon-button" type="button" aria-label="Fokusmodus beenden">✕</button>
-      </div>
-    </div>
-
-    <section id="keyboard" class="keyboard-wrap"></section>
-  </main>
-
-  <!-- ===== MIDI / debug ===== -->
-  <dialog id="midi-dialog" class="midi-dialog">
-    <div id="debug" class="debug">
-      <div class="debug-head">
-        <h2>Klavier-Verbindung</h2>
-        <span data-status class="status">Nicht verbunden</span>
-        <button id="connect" class="button" type="button">Neu verbinden</button>
-        <button id="midi-close" class="icon-button" type="button" aria-label="Schließen">✕</button>
-      </div>
-      <ul data-devices class="devices"></ul>
-      <details class="diagnostics">
-        <summary>Technische Details</summary>
-        <pre id="midi-diagnostics">–</pre>
-      </details>
-      <p class="hint">
-        USB: Kabel vom USB-to-Host-Anschluss des Klaviers. Bluetooth: Bluetooth-MIDI am Klavier einschalten und in
-        der Browser-App koppeln (dort Einstellungen → „Setup Bluetooth MIDI Central“), nicht in den iOS-Einstellungen.
-      </p>
-      <div class="log-head">
-        <h3>MIDI-Ereignisse</h3>
-        <span data-counts class="counts">an 0 · aus 0 · Pedal 0 · CC 0</span>
-        <button data-clear class="button" type="button">Leeren</button>
-      </div>
-      <div data-log class="log"></div>
-      <p class="hint sim-help">
-        <strong>Simulator:</strong>
-        <kbd>A</kbd>–<kbd>Ä</kbd> weiße Tasten,
-        <kbd>W</kbd> <kbd>E</kbd> <kbd>T</kbd> <kbd>Z</kbd> <kbd>U</kbd> <kbd>O</kbd> <kbd>P</kbd> schwarze Tasten,
-        <kbd>Y</kbd>/<kbd>X</kbd> Oktave (<span id="sim-octave"></span>),
-        <kbd>Leertaste</kbd> Pedal, <kbd>Umschalt</kbd> halten für laut. Oder die Bildschirmtasten antippen.
-      </p>
-    </div>
-  </dialog>
-
-  <!-- ===== Backup ===== -->
-  <dialog id="backup-dialog" class="midi-dialog">
-    <div class="debug">
-      <div class="debug-head">
-        <h2>Sicherung</h2>
-        <button id="backup-close" class="icon-button" type="button" aria-label="Schließen">✕</button>
-      </div>
-      <p class="hint">
-        Stücke und Übungsverlauf sind nur in diesem Browser auf diesem Gerät gespeichert. iOS kann Website-Daten
-        löschen – speichere deshalb ab und zu eine Sicherung, z. B. über die Dateien-App in iCloud Drive.
-      </p>
-      <p>Letzte Sicherung: <b id="backup-last">nie</b></p>
-      <div class="library-actions">
-        <button id="backup-export" class="button primary" type="button">Sicherung speichern</button>
-        <label class="button">
-          Aus Sicherung wiederherstellen…
-          <input id="backup-file" type="file" accept=".json,application/json" hidden>
-        </label>
-        <button id="backup-paste" class="button" type="button">Aus Zwischenablage wiederherstellen</button>
-      </div>
-      <p id="backup-status" class="hint" hidden></p>
-    </div>
-  </dialog>
-
-  <script type="module" src="js/main.js"></script>
+        // Sheet music library: changes only with its own version number.
+        await load('vendor/opensheetmusicdisplay.min.js?v=2.2.1');
+        await load(`js/main.js${v}`, { type: 'module' });
+      } catch (err) {
+        showStartupError(`Die App konnte nicht starten: ${err.message || err}. Bitte die Seite neu laden.`);
+      }
+    })();
+  </script>
 </body>
 </html>

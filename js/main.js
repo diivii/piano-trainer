@@ -391,7 +391,7 @@ async function ensureSamples() {
 
   let index;
   try {
-    index = await (await fetch('samples/index.json')).json();
+    index = await (await fetch('samples/index.json', { cache: 'no-cache' })).json();
   } catch {
     return; // offline: try again next time
   }
@@ -402,12 +402,12 @@ async function ensureSamples() {
       // Keep built-in pieces up to date (e.g. translated titles), unless deleted.
       const stored = await storage.getPiece(sample.id);
       if (stored?.builtIn && (stored.title !== sample.title || stored.composer !== sample.composer)) {
-        const content = await (await fetch(`samples/${sample.file}`)).text();
+        const content = await (await fetch(`samples/${sample.file}`, { cache: 'no-cache' })).text();
         await storage.savePiece({ ...stored, title: sample.title, composer: sample.composer, content });
       }
       continue;
     }
-    const content = await (await fetch(`samples/${sample.file}`)).text();
+    const content = await (await fetch(`samples/${sample.file}`, { cache: 'no-cache' })).text();
     await storage.savePiece({
       id: sample.id,
       title: sample.title,
@@ -780,7 +780,8 @@ simulator.onOctaveChange(simulator.baseNote);
 
 $('midi-pill').addEventListener('click', () => $('midi-dialog').showModal());
 setInterval(() => {
-  if ($('midi-dialog').open) $('midi-diagnostics').textContent = midi.status.diagnostics ?? 'Noch kein MIDI-Zugriff.';
+  if (!$('midi-dialog').open) return;
+  $('midi-diagnostics').textContent = `App-Version: ${window.appVersion ?? '?'}\n${midi.status.diagnostics ?? 'Noch kein MIDI-Zugriff.'}`;
 }, 500);
 $('midi-close').addEventListener('click', () => $('midi-dialog').close());
 $('connect').addEventListener('click', () => midi.connect());

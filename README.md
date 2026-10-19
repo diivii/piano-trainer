@@ -52,12 +52,22 @@ website data, so use **Backup** in the library now and then.
 
 ## Deploying
 
-GitHub Pages serves the `main` branch. Push, wait ~1 minute, reload on the iPad.
+Every push to `main` runs the GitHub Actions workflow `.github/workflows/pages.yml`,
+which stamps the commit as version (`tools/stamp_version.py`) and publishes to
+GitHub Pages. Wait ~1 minute, then reload on the iPad.
+
+`index.html` is a small shell that fetches `version.json` uncached on every start
+and loads `app.html`, the stylesheet and all modules with `?v=<version>`, so a
+reload always gets the latest version (GitHub Pages lets browsers cache files for
+10 minutes). The connection dialog's "Technische Details" shows the running version.
+Locally there's no `version.json` and files load unversioned ("lokal").
 
 ## Project layout
 
 | File | Purpose |
 |---|---|
+| `index.html` | Shell: startup error display and bootstrap that loads the current version |
+| `app.html` | The app's markup (library, practice screen, dialogs) |
 | `js/main.js` | App controller: library and practice screens, wiring |
 | `js/midi-input.js` | All piano input (Web MIDI + simulator) as normalized events. The only part to replace for a native app. |
 | `js/score-view.js` | Sheet music rendering, cursor, note colors; turns a score into practice steps |
@@ -72,4 +82,5 @@ GitHub Pages serves the `main` branch. Push, wait ~1 minute, reload on the iPad.
 | `js/debug-panel.js` | MIDI event log |
 | `vendor/` | Bundled OpenSheetMusicDisplay 2.2.1 (BSD-3 license) |
 | `tools/serve.py` | Local no-cache dev server |
+| `tools/stamp_version.py` | Adds the version to imports and writes `version.json` (used when publishing) |
 | `tools/make_samples.py` | Generates the built-in sample pieces and `samples/index.json` |

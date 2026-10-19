@@ -8,3 +8,6 @@ __pycache__/
 Thumbs.db
 .DS_Store
 .vscode/
+
+# Written when publishing (tools/stamp_version.py)
+version.json

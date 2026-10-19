@@ -14,8 +14,18 @@ export const HANDS = { BOTH: 'both', RIGHT: 'right', LEFT: 'left' };
 
 const GRACE_MS = 400;
 
+// The notes of a step the player has to play with the selected hand(s).
+export function requiredNotes(step, hands) {
+  const wanted = (n) =>
+    hands === HANDS.BOTH ||
+    (hands === HANDS.RIGHT && n.staff === STAFF.RIGHT) ||
+    (hands === HANDS.LEFT && n.staff === STAFF.LEFT);
+  return new Set(step.notes.filter(wanted).map((n) => n.midi));
+}
+
 export class PracticeSession {
   constructor(steps, { hands = HANDS.BOTH, fromMeasure = 1, toMeasure = Infinity, loop = false } = {}, callbacks = {}) {
+    this.mode = 'wait';
     this.steps = steps;
     this.hands = hands;
     this.loop = loop;
@@ -38,12 +48,10 @@ export class PracticeSession {
   }
 
   required(step) {
-    const wanted = (n) =>
-      this.hands === HANDS.BOTH ||
-      (this.hands === HANDS.RIGHT && n.staff === STAFF.RIGHT) ||
-      (this.hands === HANDS.LEFT && n.staff === STAFF.LEFT);
-    return new Set(step.notes.filter(wanted).map((n) => n.midi));
+    return requiredNotes(step, this.hands);
   }
+
+  stop() {}
 
   get current() {
     return this.playable[this.pos] ?? null;
@@ -116,6 +124,7 @@ export class PracticeSession {
       .sort((a, b) => b[1] - a[1])
       .map(([measure, count]) => ({ measure: Number(measure), count }));
     return {
+      mode: this.mode,
       correct,
       wrong,
       accuracy: total ? correct / total : 1,
@@ -123,6 +132,7 @@ export class PracticeSession {
       seconds: startedAt === null ? 0 : ((endedAt ?? now) - startedAt) / 1000,
       progress: this.playable.length ? this.pos / this.playable.length : 1,
       troubleMeasures,
+      mistakesByMeasure,
     };
   }
 }

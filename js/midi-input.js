@@ -78,7 +78,11 @@ export class MidiInput {
     // Ignore system real-time messages (active sensing 0xFE, clock 0xF8, ...).
     if (statusByte >= 0xf0) return;
 
-    const base = { time: msg.timeStamp, source: SOURCE.MIDI, device: input.name };
+    // Timestamps should share performance.now()'s clock (tempo mode relies on it),
+    // but some Web MIDI implementations use another base; fall back to "now" then.
+    const now = performance.now();
+    const time = Math.abs(msg.timeStamp - now) < 1000 ? msg.timeStamp : now;
+    const base = { time, source: SOURCE.MIDI, device: input.name };
     const kind = statusByte & 0xf0;
 
     if (kind === 0x90 && d2 > 0) {
@@ -150,6 +154,8 @@ export class KeyboardSimulator {
   }
 
   onKeyUp(e) {
+    if (this.isTyping(e)) return;
+    if (e.code === 'Space') e.preventDefault(); // don't "click" a focused button
     if (e.code === 'Space' && this.pedalDown) {
       this.pedalDown = false;
       this.midi.inject({ type: 'pedal', value: 0, down: false, source: SOURCE.KEYBOARD });

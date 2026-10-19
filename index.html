@@ -37,78 +37,112 @@
 </head>
 <body>
   <div id="startup-error" class="startup-error" hidden></div>
-  <header>
-    <h1>Piano Trainer</h1>
-    <div class="now">
-      <span class="caption">Playing</span>
-      <span id="held" class="held">–</span>
-      <span id="pedal" class="pedal">Pedal: up</span>
-    </div>
+
+  <header class="app-header">
+    <button id="back" class="icon-button" type="button" hidden aria-label="Back to library">‹ Library</button>
+    <h1 id="app-title">Piano Trainer</h1>
+    <span id="now-playing" class="now-playing" hidden></span>
+    <button id="midi-pill" class="midi-pill" type="button" data-state="off">
+      <span class="dot"></span><span data-pill-label>No piano</span>
+    </button>
   </header>
 
-  <main>
-    <section class="toolbar">
-      <label class="file-button">
-        Open piece…
+  <!-- ===== Library ===== -->
+  <main id="library-view" class="library-view">
+    <div class="library-head">
+      <h2>Your pieces</h2>
+      <label class="button primary">
+        + Import piece
         <input id="file" type="file" accept=".musicxml,.xml,.mxl" hidden>
       </label>
-      <button id="load-sample" type="button">Sample: Ode to Joy</button>
+    </div>
+    <p class="hint">MusicXML files (.musicxml, .xml, .mxl). Pieces and progress are stored on this device.</p>
+    <div id="library" class="library"></div>
+  </main>
 
-      <span class="sep"></span>
-
-      <label>Hands
-        <select id="hands">
-          <option value="both">Both</option>
-          <option value="right">Right</option>
-          <option value="left">Left</option>
-        </select>
+  <!-- ===== Practice ===== -->
+  <main id="practice-view" class="practice-view" hidden>
+    <section class="toolbar">
+      <div class="segmented" data-setting="mode">
+        <button type="button" data-value="wait">Wait</button>
+        <button type="button" data-value="tempo">Tempo</button>
+      </div>
+      <div class="segmented" data-setting="hands">
+        <button type="button" data-value="left">Left</button>
+        <button type="button" data-value="both">Both</button>
+        <button type="button" data-value="right">Right</button>
+      </div>
+      <label class="field">Bars
+        <input id="from-bar" type="number" min="1" value="1" inputmode="numeric">
+        <span>–</span>
+        <input id="to-bar" type="number" min="1" value="1" inputmode="numeric">
       </label>
-      <label>Bars
-        <input id="from-bar" type="number" min="1" value="1">
-        –
-        <input id="to-bar" type="number" min="1" value="1">
-      </label>
-      <label><input id="loop" type="checkbox"> Loop</label>
-      <label><input id="hints" type="checkbox" checked> Key hints</label>
-      <button id="restart" type="button">Restart</button>
+      <div class="tempo-only field">
+        <button id="tempo-down" class="icon-button" type="button" aria-label="Slower">−</button>
+        <input id="tempo" type="number" min="20" max="240" inputmode="numeric">
+        <button id="tempo-up" class="icon-button" type="button" aria-label="Faster">+</button>
+        <span class="unit">BPM <small id="score-tempo"></small></span>
+      </div>
+      <div class="toggles">
+        <button type="button" class="toggle" data-toggle="loop">Loop</button>
+        <button type="button" class="toggle" data-toggle="hints">Key hints</button>
+        <button type="button" class="toggle tempo-only" data-toggle="metronome">Metronome</button>
+      </div>
+      <div class="toolbar-end">
+        <button id="zoom-out" class="icon-button" type="button" aria-label="Smaller notes">A−</button>
+        <button id="zoom-in" class="icon-button" type="button" aria-label="Bigger notes">A+</button>
+        <button id="focus" class="icon-button" type="button" aria-label="Focus mode">⤢</button>
+        <button id="restart" class="button primary" type="button">Restart</button>
+      </div>
     </section>
 
     <section class="stats">
-      <span id="piece-title" class="piece-title">No piece loaded</span>
       <div class="progress"><div id="progress-bar"></div></div>
-      <span>✓ <b id="stat-correct">0</b></span>
-      <span>✗ <b id="stat-wrong">0</b></span>
-      <span>Accuracy <b id="stat-accuracy">–</b></span>
-      <span>Time <b id="stat-time">0:00</b></span>
-      <span id="stat-laps-wrap" hidden>Laps <b id="stat-laps">0</b></span>
+      <div id="stats" class="stat-list"></div>
     </section>
-    <div id="message" class="message" hidden></div>
 
-    <section id="score" class="score"></section>
+    <div class="score-wrap">
+      <section id="score" class="score"></section>
+      <div id="feedback" class="feedback" hidden></div>
+      <div id="message" class="message" hidden></div>
+      <div class="focus-controls">
+        <button id="focus-restart" class="icon-button" type="button" aria-label="Restart">↻</button>
+        <button id="focus-exit" class="icon-button" type="button" aria-label="Exit focus mode">✕</button>
+      </div>
+    </div>
 
     <section id="keyboard" class="keyboard-wrap"></section>
-
-    <section class="help">
-      <strong>Simulator:</strong>
-      <kbd>A</kbd>–<kbd>'</kbd> white keys,
-      <kbd>W</kbd> <kbd>E</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> <kbd>O</kbd> <kbd>P</kbd> black keys,
-      <kbd>Z</kbd>/<kbd>X</kbd> octave (<span id="sim-octave"></span>),
-      <kbd>Space</kbd> pedal, hold <kbd>Shift</kbd> for loud.
-      Or click / touch the keys.
-    </section>
-
-    <details id="debug" class="debug">
-      <summary class="debug-head">
-        <h2>MIDI</h2>
-        <span data-status class="status">Not connected</span>
-        <button id="connect" type="button">Reconnect</button>
-        <span data-counts class="counts">on 0 · off 0 · pedal 0 · cc 0</span>
-        <button data-clear type="button">Clear log</button>
-      </summary>
-      <ul data-devices class="devices"></ul>
-      <div data-log class="log"></div>
-    </details>
   </main>
+
+  <!-- ===== MIDI / debug ===== -->
+  <dialog id="midi-dialog" class="midi-dialog">
+    <div id="debug" class="debug">
+      <div class="debug-head">
+        <h2>Piano connection</h2>
+        <span data-status class="status">Not connected</span>
+        <button id="connect" class="button" type="button">Reconnect</button>
+        <button id="midi-close" class="icon-button" type="button" aria-label="Close">✕</button>
+      </div>
+      <ul data-devices class="devices"></ul>
+      <p class="hint">
+        USB: cable from the piano's USB-to-Host port. Bluetooth: enable Bluetooth MIDI on the piano and pair it
+        inside the browser app (not in iOS Settings).
+      </p>
+      <div class="log-head">
+        <h3>MIDI events</h3>
+        <span data-counts class="counts">on 0 · off 0 · pedal 0 · cc 0</span>
+        <button data-clear class="button" type="button">Clear</button>
+      </div>
+      <div data-log class="log"></div>
+      <p class="hint sim-help">
+        <strong>Simulator:</strong>
+        <kbd>A</kbd>–<kbd>'</kbd> white keys,
+        <kbd>W</kbd> <kbd>E</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> <kbd>O</kbd> <kbd>P</kbd> black keys,
+        <kbd>Z</kbd>/<kbd>X</kbd> octave (<span id="sim-octave"></span>),
+        <kbd>Space</kbd> pedal, hold <kbd>Shift</kbd> for loud. Or touch the on-screen keys.
+      </p>
+    </div>
+  </dialog>
 
   <script type="module" src="js/main.js"></script>
 </body>

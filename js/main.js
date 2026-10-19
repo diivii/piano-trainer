@@ -726,6 +726,9 @@ const simulator = new KeyboardSimulator(midi, {
 simulator.onOctaveChange(simulator.baseNote);
 
 $('midi-pill').addEventListener('click', () => $('midi-dialog').showModal());
+setInterval(() => {
+  if ($('midi-dialog').open) $('midi-diagnostics').textContent = midi.status.diagnostics ?? 'No MIDI access yet.';
+}, 500);
 $('midi-close').addEventListener('click', () => $('midi-dialog').close());
 $('connect').addEventListener('click', () => midi.connect());
 

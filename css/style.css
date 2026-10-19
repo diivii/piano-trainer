@@ -438,3 +438,16 @@ body.focus .focus-controls { display: flex; }
 .results-trouble { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.4rem; }
 .results-trouble span { color: var(--warn); font-size: 0.9rem; }
 .results .actions { display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.3rem; }
+
+.diagnostics summary { color: var(--muted); font-size: 0.85rem; cursor: pointer; }
+.diagnostics pre {
+  margin: 0.4rem 0 0;
+  padding: 0.5rem;
+  background: #101216;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  -webkit-user-select: text;
+  user-select: text;
+}

@@ -69,30 +69,90 @@ export class MidiInput {
       return;
     }
     this.setStatus({ state: 'requesting', error: null });
+    clearInterval(this.pollTimer);
     try {
       this.access = await navigator.requestMIDIAccess({ sysex: false });
     } catch (err) {
       this.setStatus({ state: 'denied', error: err.message || String(err) });
       return;
     }
-    this.access.onstatechange = () => this.refreshInputs();
-    this.refreshInputs();
+    this.attached = new WeakSet(); // ports we listen to
+    this.seen = new WeakSet(); // message events already handled
+    this.deviceKey = null;
+    this.diag = { refreshes: 0, stateChanges: 0, rawMessages: 0, lastRaw: null };
+
+    const onStateChange = () => {
+      this.diag.stateChanges++;
+      this.refreshInputs();
+    };
+    this.access.onstatechange = onStateChange;
+    this.access.addEventListener?.('statechange', onStateChange);
+
+    // Some Web MIDI polyfills fill in the device list late, or never send
+    // "statechange" events, so keep checking for devices.
+    this.refreshInputs(true);
+    this.pollTimer = setInterval(() => this.refreshInputs(), 1500);
   }
 
-  refreshInputs() {
-    let inputs;
+  refreshInputs(force = false) {
+    this.diag.refreshes++;
+    let inputs, outputs;
     try {
       inputs = listPorts(this.access.inputs);
+      outputs = listPorts(this.access.outputs);
     } catch (err) {
       this.setStatus({ state: 'denied', error: `Could not list MIDI devices: ${err.message || err}` });
       return;
     }
-    const devices = [];
-    for (const input of inputs) {
-      input.onmidimessage = (msg) => this.handleMessage(msg, input);
-      devices.push({ id: input.id, name: input.name, manufacturer: input.manufacturer, state: input.state });
+    for (const input of inputs) this.listen(input);
+
+    const devices = inputs.map((p) => ({ id: p.id, name: p.name, manufacturer: p.manufacturer, state: p.state }));
+    const key = JSON.stringify(devices);
+    this.status.diagnostics = this.describe(inputs.length, outputs);
+    if (force || key !== this.deviceKey) {
+      this.deviceKey = key;
+      this.setStatus({ state: 'ready', devices });
     }
-    this.setStatus({ state: 'ready', devices });
+  }
+
+  listen(port) {
+    if (this.attached.has(port)) return;
+    this.attached.add(port);
+    // Listen both ways; implementations differ in which one they support.
+    // The same event object arriving twice is only handled once.
+    const handler = (msg) => {
+      if (msg && typeof msg === 'object') {
+        if (this.seen.has(msg)) return;
+        this.seen.add(msg);
+      }
+      this.handleMessage(msg, port);
+    };
+    port.onmidimessage = handler;
+    port.addEventListener?.('midimessage', handler);
+    try {
+      port.open?.()?.catch?.(() => {});
+    } catch {
+      // open() is optional; setting onmidimessage opens the port too
+    }
+  }
+
+  // What the browser's MIDI implementation looks like, shown in the
+  // connection dialog to debug devices that don't show up.
+  describe(inputCount, outputs) {
+    const map = this.access?.inputs;
+    const type = map === null ? 'null' : Array.isArray(map) ? 'array' : typeof map;
+    const proto = map && typeof map === 'object' ? Object.getPrototypeOf(map) : null;
+    const methods = proto ? Object.getOwnPropertyNames(proto).filter((n) => n !== 'constructor') : [];
+    const native = String(navigator.requestMIDIAccess).includes('[native code]');
+    const d = this.diag;
+    return [
+      `implementation: ${native ? 'built-in' : 'polyfill'}`,
+      `inputs: ${type} ${proto?.constructor?.name ?? ''} size=${map?.size ?? map?.length ?? '?'}`,
+      `inputs keys: ${map && typeof map === 'object' ? Object.keys(map).slice(0, 8).join(', ') || '(none)' : '-'}`,
+      `inputs methods: ${methods.slice(0, 12).join(', ') || '(none)'}`,
+      `listed: ${inputCount} input(s), ${outputs.length} output(s)${outputs.length ? ` [${outputs.map((o) => o.name).join(', ')}]` : ''}`,
+      `checks: ${d.refreshes}, statechange events: ${d.stateChanges}, raw messages: ${d.rawMessages}${d.lastRaw ? ` (last: ${d.lastRaw})` : ''}`,
+    ].join('\n');
   }
 
   setStatus(patch) {
@@ -101,7 +161,10 @@ export class MidiInput {
   }
 
   handleMessage(msg, input) {
+    if (!msg?.data) return;
     const [statusByte, d1, d2] = msg.data;
+    this.diag.rawMessages++;
+    this.diag.lastRaw = Array.from(msg.data, (b) => b.toString(16).padStart(2, '0')).join(' ');
     // Ignore system real-time messages (active sensing 0xFE, clock 0xF8, ...).
     if (statusByte >= 0xf0) return;
 

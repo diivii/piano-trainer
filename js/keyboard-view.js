@@ -93,6 +93,7 @@ export class KeyboardView {
     this.container.replaceChildren(board);
     for (const [note, state] of this.states) this.applyState(note, state);
     this.setExpected(this.expected);
+    this.setPlaying(this.playing ?? []);
     if (this.simBase !== null) this.setOctaveMarker(this.simBase);
   }
 
@@ -148,6 +149,12 @@ export class KeyboardView {
   setExpected(notes) {
     this.expected = new Set(notes);
     for (const [note, key] of this.keys) key.classList.toggle('expected', this.expected.has(note));
+  }
+
+  // Notes sounding while the piece is played back.
+  setPlaying(notes) {
+    this.playing = new Set(notes);
+    for (const [note, key] of this.keys) key.classList.toggle('playing', this.playing.has(note));
   }
 
   flashWrong(note) {

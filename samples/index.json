@@ -2,43 +2,43 @@
   {
     "id": "sample-mary-had-a-little-lamb",
     "file": "mary-had-a-little-lamb.musicxml",
-    "title": "Mary Had a Little Lamb",
-    "composer": "Traditional (simple arrangement)"
+    "title": "Mary hat ein kleines Lamm",
+    "composer": "Traditionell (einfache Bearbeitung)"
   },
   {
     "id": "sample-twinkle-twinkle",
     "file": "twinkle-twinkle.musicxml",
-    "title": "Twinkle, Twinkle, Little Star",
-    "composer": "Traditional (simple arrangement)"
+    "title": "Funkel, funkel, kleiner Stern",
+    "composer": "Traditionell (einfache Bearbeitung)"
   },
   {
     "id": "sample-frere-jacques",
     "file": "frere-jacques.musicxml",
-    "title": "Frère Jacques",
-    "composer": "Traditional (simple arrangement)"
+    "title": "Bruder Jakob",
+    "composer": "Traditionell (einfache Bearbeitung)"
   },
   {
     "id": "sample-au-clair-de-la-lune",
     "file": "au-clair-de-la-lune.musicxml",
     "title": "Au clair de la lune",
-    "composer": "Traditional (simple arrangement)"
+    "composer": "Traditionell (einfache Bearbeitung)"
   },
   {
     "id": "sample-jingle-bells",
     "file": "jingle-bells.musicxml",
-    "title": "Jingle Bells (chorus)",
-    "composer": "J. Pierpont (simple arrangement)"
+    "title": "Jingle Bells (Refrain)",
+    "composer": "J. Pierpont (einfache Bearbeitung)"
   },
   {
     "id": "sample-minuet-in-g",
     "file": "minuet-in-g.musicxml",
-    "title": "Minuet in G",
-    "composer": "C. Petzold (simple arrangement)"
+    "title": "Menuett in G-Dur",
+    "composer": "C. Petzold (einfache Bearbeitung)"
   },
   {
     "id": "sample-ode-to-joy",
     "file": "ode-to-joy.musicxml",
-    "title": "Ode to Joy",
-    "composer": "L. v. Beethoven (simple arrangement)"
+    "title": "Ode an die Freude",
+    "composer": "L. v. Beethoven (einfache Bearbeitung)"
   }
 ]

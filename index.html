@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-  <title>Piano Trainer</title>
+  <title>Klaviertrainer</title>
   <link rel="stylesheet" href="css/style.css">
   <script>
     // Show startup problems on the page itself (there's no console on the iPad).
@@ -28,18 +28,18 @@
           e.preventDefault();
           return;
         }
-        show(`Error: ${e.message} (${(e.filename || '').split('/').pop()}:${e.lineno})`);
+        show(`Fehler: ${e.message} (${(e.filename || '').split('/').pop()}:${e.lineno})`);
       });
-      window.addEventListener('unhandledrejection', (e) => show(`Error: ${e.reason?.message || e.reason}`));
+      window.addEventListener('unhandledrejection', (e) => show(`Fehler: ${e.reason?.message || e.reason}`));
       window.addEventListener('load', () => {
         if (location.protocol === 'file:') {
-          show('This page was opened as a file. Start it with start-server.cmd and open http://localhost:8000 instead.');
+          show('Diese Seite wurde als Datei geöffnet. Starte sie mit start-server.cmd und öffne http://localhost:8000.');
         } else if (!window.opensheetmusicdisplay) {
-          show('The sheet music library (vendor/opensheetmusicdisplay.min.js) could not be loaded.');
+          show('Die Notenbibliothek (vendor/opensheetmusicdisplay.min.js) konnte nicht geladen werden.');
         } else {
           // Give slower devices a moment before concluding the app didn't start.
           setTimeout(() => {
-            if (!window.pianoTrainer) show('The app failed to start. Try reloading the page.');
+            if (!window.pianoTrainer) show('Die App konnte nicht starten. Bitte die Seite neu laden.');
           }, 3000);
         }
         render(); // errors from before the page was parsed
@@ -53,27 +53,27 @@
   <div id="startup-error" class="startup-error" hidden></div>
 
   <header class="app-header">
-    <button id="back" class="icon-button" type="button" hidden aria-label="Back to library">‹ Library</button>
-    <h1 id="app-title">Piano Trainer</h1>
+    <button id="back" class="icon-button" type="button" hidden aria-label="Zurück zur Bibliothek">‹ Bibliothek</button>
+    <h1 id="app-title">Klaviertrainer</h1>
     <span id="now-playing" class="now-playing" hidden></span>
     <button id="midi-pill" class="midi-pill" type="button" data-state="off">
-      <span class="dot"></span><span data-pill-label>No piano</span>
+      <span class="dot"></span><span data-pill-label>Kein Klavier</span>
     </button>
   </header>
 
   <!-- ===== Library ===== -->
   <main id="library-view" class="library-view">
     <div class="library-head">
-      <h2>Your pieces</h2>
+      <h2>Deine Stücke</h2>
       <div class="library-actions">
-        <button id="backup-open" class="button" type="button">Backup</button>
+        <button id="backup-open" class="button" type="button">Sicherung</button>
         <label class="button primary">
-          + Import piece
+          + Stück importieren
           <input id="file" type="file" accept=".musicxml,.xml,.mxl" hidden>
         </label>
       </div>
     </div>
-    <p class="hint">MusicXML files (.musicxml, .xml, .mxl). Pieces and progress are stored on this device.</p>
+    <p class="hint">MusicXML-Dateien (.musicxml, .xml, .mxl). Stücke und Fortschritt werden auf diesem Gerät gespeichert.</p>
     <p id="backup-reminder" class="hint warn" hidden></p>
     <div id="library" class="library"></div>
   </main>
@@ -82,62 +82,70 @@
   <main id="practice-view" class="practice-view" hidden>
     <section class="toolbar">
       <div class="segmented" data-setting="mode">
-        <button type="button" data-value="wait">Wait</button>
+        <button type="button" data-value="wait">Warten</button>
         <button type="button" data-value="tempo">Tempo</button>
       </div>
       <div class="segmented" data-setting="hands">
-        <button type="button" data-value="left">Left</button>
-        <button type="button" data-value="both">Both</button>
-        <button type="button" data-value="right">Right</button>
+        <button type="button" data-value="left">Links</button>
+        <button type="button" data-value="both">Beide</button>
+        <button type="button" data-value="right">Rechts</button>
       </div>
-      <div class="tempo-only field">
-        <button id="tempo-down" class="icon-button" type="button" aria-label="Slower">−</button>
+      <div class="field">
+        <button id="tempo-down" class="icon-button" type="button" aria-label="Langsamer">−</button>
         <input id="tempo" type="number" min="20" max="240" inputmode="numeric">
-        <button id="tempo-up" class="icon-button" type="button" aria-label="Faster">+</button>
+        <button id="tempo-up" class="icon-button" type="button" aria-label="Schneller">+</button>
         <span class="unit">BPM <small id="score-tempo"></small></span>
       </div>
       <div class="toolbar-end">
+        <button id="listen" class="button" type="button">▶ Anhören</button>
         <button id="settings-open" class="button" type="button" aria-haspopup="true">
-          ⚙ <span id="settings-summary">Bars 1–1</span>
+          ⚙ <span id="settings-summary">Takte 1–1</span>
         </button>
-        <button id="focus" class="icon-button" type="button" aria-label="Focus mode">⤢</button>
-        <button id="restart" class="button primary" type="button">Restart</button>
+        <button id="focus" class="icon-button" type="button" aria-label="Fokusmodus">⤢</button>
+        <button id="restart" class="button primary" type="button">Neustart</button>
       </div>
 
       <div id="settings-panel" class="popover" hidden>
         <div class="popover-row">
-          <span class="popover-label">Bars</span>
+          <span class="popover-label">Takte</span>
           <input id="from-bar" type="number" min="1" value="1" inputmode="numeric">
           <span>–</span>
           <input id="to-bar" type="number" min="1" value="1" inputmode="numeric">
-          <button id="whole-piece" class="button" type="button">Whole piece</button>
+          <button id="whole-piece" class="button" type="button">Ganzes Stück</button>
         </div>
         <div class="popover-row">
-          <span class="popover-label">Practice</span>
-          <button type="button" class="toggle" data-toggle="loop">Loop</button>
-          <button type="button" class="toggle" data-toggle="hints">Key hints</button>
-          <button type="button" class="toggle tempo-only" data-toggle="metronome">Metronome</button>
+          <span class="popover-label">Üben</span>
+          <button type="button" class="toggle" data-toggle="loop">Wiederholen</button>
+          <button type="button" class="toggle" data-toggle="hints">Tastenhilfe</button>
+          <button type="button" class="toggle tempo-only" data-toggle="metronome">Metronom</button>
         </div>
         <div class="popover-row">
-          <span class="popover-label">Notes</span>
-          <button id="zoom-out" class="icon-button" type="button" aria-label="Smaller notes">A−</button>
-          <button id="zoom-in" class="icon-button" type="button" aria-label="Bigger notes">A+</button>
-        </div>
-        <div class="popover-row">
-          <span class="popover-label">Keyboard</span>
-          <div class="segmented" data-setting="keyboard">
-            <button type="button" data-value="normal">Normal</button>
-            <button type="button" data-value="strip">Thin strip</button>
+          <span class="popover-label">Anhören</span>
+          <div class="segmented" data-setting="sound">
+            <button type="button" data-value="piano">Klavier</button>
+            <button type="button" data-value="device">iPad</button>
           </div>
         </div>
-        <p class="hint">Tip: tap a bar in the music to start there; tap a second bar to loop that section.</p>
+        <div class="popover-row">
+          <span class="popover-label">Noten</span>
+          <button id="zoom-out" class="icon-button" type="button" aria-label="Kleinere Noten">A−</button>
+          <button id="zoom-in" class="icon-button" type="button" aria-label="Größere Noten">A+</button>
+        </div>
+        <div class="popover-row">
+          <span class="popover-label">Tastatur</span>
+          <div class="segmented" data-setting="keyboard">
+            <button type="button" data-value="normal">Normal</button>
+            <button type="button" data-value="strip">Schmal</button>
+          </div>
+        </div>
+        <p class="hint">Tipp: Tippe auf einen Takt in den Noten, um dort zu beginnen; tippe auf einen zweiten Takt, um diesen Abschnitt zu wiederholen.</p>
       </div>
     </section>
 
     <section class="stats">
       <div class="progress"><div id="progress-bar"></div></div>
       <div id="stats" class="stat-list"></div>
-      <button id="keyboard-toggle" class="icon-button small" type="button" aria-label="Keyboard size">⌨</button>
+      <button id="keyboard-toggle" class="icon-button small" type="button" aria-label="Tastaturgröße">⌨</button>
     </section>
 
     <div class="score-wrap">
@@ -147,8 +155,9 @@
       <div id="message" class="message" hidden></div>
       <div id="results" class="results" hidden></div>
       <div class="focus-controls">
-        <button id="focus-restart" class="icon-button" type="button" aria-label="Restart">↻</button>
-        <button id="focus-exit" class="icon-button" type="button" aria-label="Exit focus mode">✕</button>
+        <button id="focus-listen" class="icon-button" type="button" aria-label="Anhören">▶</button>
+        <button id="focus-restart" class="icon-button" type="button" aria-label="Neustart">↻</button>
+        <button id="focus-exit" class="icon-button" type="button" aria-label="Fokusmodus beenden">✕</button>
       </div>
     </div>
 
@@ -159,32 +168,32 @@
   <dialog id="midi-dialog" class="midi-dialog">
     <div id="debug" class="debug">
       <div class="debug-head">
-        <h2>Piano connection</h2>
-        <span data-status class="status">Not connected</span>
-        <button id="connect" class="button" type="button">Reconnect</button>
-        <button id="midi-close" class="icon-button" type="button" aria-label="Close">✕</button>
+        <h2>Klavier-Verbindung</h2>
+        <span data-status class="status">Nicht verbunden</span>
+        <button id="connect" class="button" type="button">Neu verbinden</button>
+        <button id="midi-close" class="icon-button" type="button" aria-label="Schließen">✕</button>
       </div>
       <ul data-devices class="devices"></ul>
       <details class="diagnostics">
-        <summary>Technical details</summary>
+        <summary>Technische Details</summary>
         <pre id="midi-diagnostics">–</pre>
       </details>
       <p class="hint">
-        USB: cable from the piano's USB-to-Host port. Bluetooth: enable Bluetooth MIDI on the piano and pair it
-        inside the browser app (not in iOS Settings).
+        USB: Kabel vom USB-to-Host-Anschluss des Klaviers. Bluetooth: Bluetooth-MIDI am Klavier einschalten und in
+        der Browser-App koppeln (dort Einstellungen → „Setup Bluetooth MIDI Central“), nicht in den iOS-Einstellungen.
       </p>
       <div class="log-head">
-        <h3>MIDI events</h3>
-        <span data-counts class="counts">on 0 · off 0 · pedal 0 · cc 0</span>
-        <button data-clear class="button" type="button">Clear</button>
+        <h3>MIDI-Ereignisse</h3>
+        <span data-counts class="counts">an 0 · aus 0 · Pedal 0 · CC 0</span>
+        <button data-clear class="button" type="button">Leeren</button>
       </div>
       <div data-log class="log"></div>
       <p class="hint sim-help">
         <strong>Simulator:</strong>
-        <kbd>A</kbd>–<kbd>'</kbd> white keys,
-        <kbd>W</kbd> <kbd>E</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> <kbd>O</kbd> <kbd>P</kbd> black keys,
-        <kbd>Z</kbd>/<kbd>X</kbd> octave (<span id="sim-octave"></span>),
-        <kbd>Space</kbd> pedal, hold <kbd>Shift</kbd> for loud. Or touch the on-screen keys.
+        <kbd>A</kbd>–<kbd>Ä</kbd> weiße Tasten,
+        <kbd>W</kbd> <kbd>E</kbd> <kbd>T</kbd> <kbd>Z</kbd> <kbd>U</kbd> <kbd>O</kbd> <kbd>P</kbd> schwarze Tasten,
+        <kbd>Y</kbd>/<kbd>X</kbd> Oktave (<span id="sim-octave"></span>),
+        <kbd>Leertaste</kbd> Pedal, <kbd>Umschalt</kbd> halten für laut. Oder die Bildschirmtasten antippen.
       </p>
     </div>
   </dialog>
@@ -193,21 +202,21 @@
   <dialog id="backup-dialog" class="midi-dialog">
     <div class="debug">
       <div class="debug-head">
-        <h2>Backup</h2>
-        <button id="backup-close" class="icon-button" type="button" aria-label="Close">✕</button>
+        <h2>Sicherung</h2>
+        <button id="backup-close" class="icon-button" type="button" aria-label="Schließen">✕</button>
       </div>
       <p class="hint">
-        Pieces and practice history are only stored in this browser on this device. iOS can clear website data,
-        so save a backup now and then, e.g. to iCloud Drive via the Files app.
+        Stücke und Übungsverlauf sind nur in diesem Browser auf diesem Gerät gespeichert. iOS kann Website-Daten
+        löschen – speichere deshalb ab und zu eine Sicherung, z. B. über die Dateien-App in iCloud Drive.
       </p>
-      <p>Last backup: <b id="backup-last">never</b></p>
+      <p>Letzte Sicherung: <b id="backup-last">nie</b></p>
       <div class="library-actions">
-        <button id="backup-export" class="button primary" type="button">Save backup</button>
+        <button id="backup-export" class="button primary" type="button">Sicherung speichern</button>
         <label class="button">
-          Restore from backup…
+          Aus Sicherung wiederherstellen…
           <input id="backup-file" type="file" accept=".json,application/json" hidden>
         </label>
-        <button id="backup-paste" class="button" type="button">Restore from clipboard</button>
+        <button id="backup-paste" class="button" type="button">Aus Zwischenablage wiederherstellen</button>
       </div>
       <p id="backup-status" class="hint" hidden></p>
     </div>

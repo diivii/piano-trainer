@@ -28,8 +28,8 @@ C, F, G = 'C3+G3', 'F2+C3', 'G2+D3'
 PIECES = [
     {
         'id': 'mary-had-a-little-lamb',
-        'title': 'Mary Had a Little Lamb',
-        'composer': 'Traditional (simple arrangement)',
+        'title': 'Mary hat ein kleines Lamm',
+        'composer': 'Traditionell (einfache Bearbeitung)',
         'time': (4, 4), 'key': 0, 'tempo': 100,
         'rh': ['E4:q D4:q C4:q D4:q', 'E4:q E4:q E4:h', 'D4:q D4:q D4:h', 'E4:q G4:q G4:h',
                'E4:q D4:q C4:q D4:q', 'E4:q E4:q E4:q E4:q', 'D4:q D4:q E4:q D4:q', 'C4:w'],
@@ -37,8 +37,8 @@ PIECES = [
     },
     {
         'id': 'twinkle-twinkle',
-        'title': 'Twinkle, Twinkle, Little Star',
-        'composer': 'Traditional (simple arrangement)',
+        'title': 'Funkel, funkel, kleiner Stern',
+        'composer': 'Traditionell (einfache Bearbeitung)',
         'time': (4, 4), 'key': 0, 'tempo': 90,
         'rh': ['C4:q C4:q G4:q G4:q', 'A4:q A4:q G4:h', 'F4:q F4:q E4:q E4:q', 'D4:q D4:q C4:h',
                'G4:q G4:q F4:q F4:q', 'E4:q E4:q D4:h', 'G4:q G4:q F4:q F4:q', 'E4:q E4:q D4:h',
@@ -49,8 +49,8 @@ PIECES = [
     },
     {
         'id': 'frere-jacques',
-        'title': 'Frère Jacques',
-        'composer': 'Traditional (simple arrangement)',
+        'title': 'Bruder Jakob',
+        'composer': 'Traditionell (einfache Bearbeitung)',
         'time': (4, 4), 'key': 0, 'tempo': 100,
         'rh': ['C4:q D4:q E4:q C4:q', 'C4:q D4:q E4:q C4:q', 'E4:q F4:q G4:h', 'E4:q F4:q G4:h',
                'G4:e A4:e G4:e F4:e E4:q C4:q', 'G4:e A4:e G4:e F4:e E4:q C4:q',
@@ -60,7 +60,7 @@ PIECES = [
     {
         'id': 'au-clair-de-la-lune',
         'title': 'Au clair de la lune',
-        'composer': 'Traditional (simple arrangement)',
+        'composer': 'Traditionell (einfache Bearbeitung)',
         'time': (4, 4), 'key': 0, 'tempo': 90,
         'rh': ['C4:q C4:q C4:q D4:q', 'E4:h D4:h', 'C4:q E4:q D4:q D4:q', 'C4:w',
                'C4:q C4:q C4:q D4:q', 'E4:h D4:h', 'C4:q E4:q D4:q D4:q', 'C4:w',
@@ -73,8 +73,8 @@ PIECES = [
     },
     {
         'id': 'jingle-bells',
-        'title': 'Jingle Bells (chorus)',
-        'composer': 'J. Pierpont (simple arrangement)',
+        'title': 'Jingle Bells (Refrain)',
+        'composer': 'J. Pierpont (einfache Bearbeitung)',
         'time': (4, 4), 'key': 0, 'tempo': 120,
         'rh': ['E4:q E4:q E4:h', 'E4:q E4:q E4:h', 'E4:q G4:q C4:q. D4:e', 'E4:w',
                'F4:q F4:q F4:q. F4:e', 'F4:q E4:q E4:q E4:e E4:e', 'E4:q D4:q D4:q E4:q', 'D4:h G4:h',
@@ -87,8 +87,8 @@ PIECES = [
     },
     {
         'id': 'minuet-in-g',
-        'title': 'Minuet in G',
-        'composer': 'C. Petzold (simple arrangement)',
+        'title': 'Menuett in G-Dur',
+        'composer': 'C. Petzold (einfache Bearbeitung)',
         'time': (3, 4), 'key': 1, 'tempo': 100,
         'rh': ['D5:q G4:e A4:e B4:e C5:e', 'D5:q G4:q G4:q', 'E5:q C5:e D5:e E5:e F#5:e', 'G5:q G4:q G4:q',
                'C5:q D5:e C5:e B4:e A4:e', 'B4:q C5:e B4:e A4:e G4:e', 'F#4:q G4:e A4:e B4:e G4:e', 'A4:h.',
@@ -99,8 +99,8 @@ PIECES = [
     },
     {
         'id': 'ode-to-joy',
-        'title': 'Ode to Joy',
-        'composer': 'L. v. Beethoven (simple arrangement)',
+        'title': 'Ode an die Freude',
+        'composer': 'L. v. Beethoven (einfache Bearbeitung)',
         'time': (4, 4), 'key': 0, 'tempo': 100,
         'rh': ['E4:q E4:q F4:q G4:q', 'G4:q F4:q E4:q D4:q', 'C4:q C4:q D4:q E4:q', 'E4:q. D4:e D4:h',
                'E4:q E4:q F4:q G4:q', 'G4:q F4:q E4:q D4:q', 'C4:q C4:q D4:q E4:q', 'D4:q. C4:e C4:h',

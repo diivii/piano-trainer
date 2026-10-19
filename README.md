@@ -12,6 +12,9 @@ Live: https://diivii.github.io/piano-trainer/
   number of runs, best accuracy and the bars with the most mistakes
 - **Sheet music** from MusicXML (`.musicxml`, `.xml`, `.mxl`), rendered with
   [OpenSheetMusicDisplay](https://opensheetmusicdisplay.org/)
+- User interface in German (note names C, Cis, … B, H)
+- **Listen** (“Anhören”): plays the piece, selected bars or one hand once, through
+  the digital piano via MIDI out or with a simple built-in sound on the device
 - **Wait mode**: the cursor moves on once the right note or chord is played
 - **Tempo mode**: play along with a metronome (with count-in) at an adjustable
   tempo; every note is judged as on time, early, late or missed
@@ -61,6 +64,7 @@ GitHub Pages serves the `main` branch. Push, wait ~1 minute, reload on the iPad.
 | `js/practice.js` | Wait-mode logic, hands, looping, mistake stats (no display code) |
 | `js/tempo-practice.js` | Tempo-mode logic and timing judgement |
 | `js/metronome.js` | Metronome clicks via Web Audio |
+| `js/player.js` | Plays a piece back (MIDI out to the piano, or a Web Audio synth) |
 | `js/storage.js` | IndexedDB (pieces, runs), settings, backup import/export |
 | `js/backup.js` | Saving/restoring backup files (share sheet, download or clipboard) |
 | `js/library-view.js` | Library cards |

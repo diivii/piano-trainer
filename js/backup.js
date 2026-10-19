@@ -13,7 +13,7 @@ export async function saveBackup() {
   const data = await exportData();
   const json = JSON.stringify(data);
   const date = new Date().toISOString().slice(0, 10);
-  const name = `piano-trainer-backup-${date}.json`;
+  const name = `klaviertrainer-sicherung-${date}.json`;
   const file = new File([json], name, { type: 'application/json' });
 
   const done = (how) => {
@@ -23,7 +23,7 @@ export async function saveBackup() {
 
   if (navigator.canShare?.({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: 'Piano Trainer backup' });
+      await navigator.share({ files: [file], title: 'Klaviertrainer-Sicherung' });
       return done('shared');
     } catch (err) {
       if (err.name === 'AbortError') return null; // user cancelled the share sheet
@@ -51,7 +51,7 @@ export async function restoreBackup(source) {
   try {
     data = JSON.parse(text);
   } catch {
-    throw new Error('This file is not a Piano Trainer backup.');
+    throw new Error('Diese Datei ist keine Klaviertrainer-Sicherung.');
   }
   return importData(data);
 }

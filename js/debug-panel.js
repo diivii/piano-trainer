@@ -33,21 +33,22 @@ export class DebugPanel {
 
   showStatus({ state, error, devices, supported }) {
     const labels = {
-      idle: 'Not connected',
-      requesting: 'Requesting MIDI access…',
-      ready: devices.length ? 'Connected' : 'MIDI ready – no devices found',
-      denied: 'MIDI access denied',
-      unsupported: 'Web MIDI not supported',
+      idle: 'Nicht verbunden',
+      requesting: 'MIDI-Zugriff wird angefragt…',
+      ready: devices.length ? 'Verbunden' : 'MIDI bereit – kein Gerät gefunden',
+      denied: 'MIDI-Zugriff verweigert',
+      unsupported: 'Web MIDI wird nicht unterstützt',
     };
     this.statusEl.textContent = labels[state] ?? state;
     this.statusEl.dataset.state = state === 'ready' && devices.length ? 'ok' : state === 'ready' ? 'warn' : state;
     if (error) this.statusEl.textContent += ` (${error})`;
-    if (!supported) this.statusEl.title = 'Use Chrome/Edge on Windows, or the Web MIDI Browser app on iPad.';
+    if (!supported) this.statusEl.title = 'Unter Windows Chrome/Edge verwenden, auf dem iPad die App „Web MIDI Browser“.';
 
     this.devicesEl.replaceChildren(
       ...devices.map((d) => {
         const li = document.createElement('li');
-        li.textContent = `${d.name}${d.manufacturer ? ` (${d.manufacturer})` : ''} – ${d.state}`;
+        const state = { connected: 'verbunden', disconnected: 'getrennt' }[d.state] ?? d.state;
+        li.textContent = `${d.name}${d.manufacturer ? ` (${d.manufacturer})` : ''} – ${state}`;
         return li;
       }),
     );
@@ -55,10 +56,10 @@ export class DebugPanel {
 
   describe(event) {
     switch (event.type) {
-      case 'noteon': return `Note ON   ${noteName(event.note).padEnd(4)} #${event.note}  vel ${event.velocity}`;
-      case 'noteoff': return `Note OFF  ${noteName(event.note).padEnd(4)} #${event.note}`;
-      case 'pedal': return `Pedal     ${event.down ? 'down' : 'up'} (${event.value})`;
-      case 'cc': return `CC ${event.controller}     value ${event.value}`;
+      case 'noteon': return `Ton an    ${noteName(event.note).padEnd(4)} #${event.note}  Stärke ${event.velocity}`;
+      case 'noteoff': return `Ton aus   ${noteName(event.note).padEnd(4)} #${event.note}`;
+      case 'pedal': return `Pedal     ${event.down ? 'gedrückt' : 'los'} (${event.value})`;
+      case 'cc': return `CC ${event.controller}     Wert ${event.value}`;
       default: return event.type;
     }
   }
@@ -74,7 +75,7 @@ export class DebugPanel {
 
   renderCounts() {
     const c = this.counts;
-    this.countsEl.textContent = `on ${c.noteon} · off ${c.noteoff} · pedal ${c.pedal} · cc ${c.cc}`;
+    this.countsEl.textContent = `an ${c.noteon} · aus ${c.noteoff} · Pedal ${c.pedal} · CC ${c.cc}`;
   }
 
   clear() {

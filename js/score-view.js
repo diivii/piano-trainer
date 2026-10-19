@@ -1,9 +1,9 @@
-// Sheet music rendering via OpenSheetMusicDisplay (loaded as a global from the CDN).
+// Sheet music rendering via OpenSheetMusicDisplay (bundled in vendor/, loaded as a global).
 // Turns a MusicXML score into a flat list of "steps" the practice logic can use,
 // moves the on-screen cursor, and colors notes for feedback.
 //
-// Step shape: { index, measure (1-based number), time, notes: [{ midi, staff }] }
-//   time: position in whole notes from the start of the piece
+// Step shape: { index, measure (1-based number), time, notes: [{ midi, staff, duration }] }
+//   time, duration: in whole notes (time from the start of the piece)
 //   staff 0 = upper staff (usually right hand), staff 1 = lower staff (left hand)
 //
 // Measure shape: { number, start, duration, beats, beatType }  (start/duration in whole notes)
@@ -82,9 +82,12 @@ export class ScoreView {
         if (note.ParentVoiceEntry?.IsGrace) continue;
         // A note tied from an earlier one keeps sounding; it isn't played again.
         if (note.NoteTie && note.NoteTie.StartNote !== note) continue;
+        // How long it sounds (whole notes), including notes tied to it.
+        const tied = note.NoteTie?.Notes ?? [note];
         notes.push({
           midi: note.halfTone + 12,
           staff: note.ParentStaff?.idInMusicSheet ?? 0,
+          duration: tied.reduce((sum, n) => sum + (n.Length?.RealValue ?? 0), 0),
         });
         osmdNotes.push(note);
       }

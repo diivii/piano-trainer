@@ -16,7 +16,8 @@ export const SOURCE = {
   MOUSE: 'mouse',
 };
 
-const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+// German note names: B is B flat, H is B natural.
+const NOTE_NAMES = ['C', 'Cis', 'D', 'Dis', 'E', 'F', 'Fis', 'G', 'Gis', 'A', 'B', 'H'];
 
 // The list of MIDI ports comes in different shapes: a Map-like object in
 // today's browsers, but Web MIDI polyfills (such as the one in the iOS "Web
@@ -119,7 +120,7 @@ export class MidiInput {
 
   async connect() {
     if (!this.status.supported) {
-      this.setStatus({ state: 'unsupported', error: 'Web MIDI is not available in this browser.' });
+      this.setStatus({ state: 'unsupported', error: 'Web MIDI ist in diesem Browser nicht verfügbar.' });
       return;
     }
     this.setStatus({ state: 'requesting', error: null });
@@ -155,10 +156,11 @@ export class MidiInput {
       inputs = listPorts(this.access.inputs);
       outputs = listPorts(this.access.outputs);
     } catch (err) {
-      this.setStatus({ state: 'denied', error: `Could not list MIDI devices: ${err.message || err}` });
+      this.setStatus({ state: 'denied', error: `MIDI-Geräte konnten nicht gelesen werden: ${err.message || err}` });
       return;
     }
     for (const input of inputs) this.listen(input);
+    this.outputs = outputs.filter((o) => typeof o.send === 'function');
 
     const devices = inputs.map((p) => ({ id: p.id, name: p.name, manufacturer: p.manufacturer, state: p.state }));
     const key = JSON.stringify(devices);
@@ -167,6 +169,13 @@ export class MidiInput {
       this.deviceKey = key;
       this.setStatus({ state: 'ready', devices });
     }
+  }
+
+  // The MIDI output to play through the piano: prefer a real instrument over
+  // network sessions ("Session 1" on iOS).
+  pianoOutput() {
+    const outputs = this.outputs ?? [];
+    return outputs.find((o) => !/^session\b/i.test(o.name ?? '')) ?? outputs[0] ?? null;
   }
 
   listen(port) {

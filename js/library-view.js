@@ -2,10 +2,10 @@
 
 function relativeDay(timestamp) {
   const days = Math.floor((startOfDay(Date.now()) - startOfDay(timestamp)) / 86400000);
-  if (days <= 0) return 'today';
-  if (days === 1) return 'yesterday';
-  if (days < 30) return `${days} days ago`;
-  return new Date(timestamp).toLocaleDateString();
+  if (days <= 0) return 'heute';
+  if (days === 1) return 'gestern';
+  if (days < 30) return `vor ${days} Tagen`;
+  return new Date(timestamp).toLocaleDateString('de-DE');
 }
 
 function startOfDay(t) {
@@ -24,7 +24,7 @@ function el(tag, className, text) {
 // items: [{ piece, stats }]  (stats may be null if never practiced)
 export function renderLibrary(container, items, { onOpen, onDelete }) {
   if (!items.length) {
-    container.replaceChildren(el('p', 'empty', 'No pieces yet. Import a MusicXML file to get started.'));
+    container.replaceChildren(el('p', 'empty', 'Noch keine Stücke. Importiere eine MusicXML-Datei, um loszulegen.'));
     return;
   }
 
@@ -39,7 +39,7 @@ export function renderLibrary(container, items, { onOpen, onDelete }) {
       if (piece.composer) card.append(el('div', 'composer', piece.composer));
 
       if (stats?.troubleMeasures.length) {
-        card.append(el('div', 'trouble', `Practice bars ${stats.troubleMeasures.join(', ')}`));
+        card.append(el('div', 'trouble', `Üben: Takt ${stats.troubleMeasures.join(', ')}`));
       }
 
       const meta = el('div', 'meta');
@@ -49,17 +49,17 @@ export function renderLibrary(container, items, { onOpen, onDelete }) {
         meta.append(span);
       };
       if (stats) {
-        stat('Last', relativeDay(stats.lastPracticed));
-        stat('Runs', String(stats.runs));
-        if (stats.bestAccuracy !== null) stat('Best', `${Math.round(stats.bestAccuracy * 100)}%`);
+        stat('Zuletzt', relativeDay(stats.lastPracticed));
+        stat('Durchgänge', String(stats.runs));
+        if (stats.bestAccuracy !== null) stat('Bestes', `${Math.round(stats.bestAccuracy * 100)} %`);
       } else {
-        meta.append(el('span', '', 'Not practiced yet'));
+        meta.append(el('span', '', 'Noch nicht geübt'));
       }
       card.append(meta);
 
       const del = el('button', 'delete icon-button', '✕');
       del.type = 'button';
-      del.setAttribute('aria-label', `Delete ${piece.title}`);
+      del.setAttribute('aria-label', `${piece.title} löschen`);
       // Two taps to delete (confirm() dialogs don't work in some iOS in-app browsers).
       del.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -68,7 +68,7 @@ export function renderLibrary(container, items, { onOpen, onDelete }) {
           return;
         }
         del.classList.add('confirm');
-        del.textContent = 'Delete?';
+        del.textContent = 'Löschen?';
         setTimeout(() => {
           del.classList.remove('confirm');
           del.textContent = '✕';

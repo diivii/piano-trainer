@@ -5,6 +5,7 @@ import { ScoreView, NOTE_COLOR } from './score-view.js';
 import { PracticeSession } from './practice.js';
 import { TempoSession, JUDGEMENT } from './tempo-practice.js';
 import { Metronome } from './metronome.js';
+import { Player } from './player.js';
 import { renderLibrary } from './library-view.js';
 import { saveBackup, restoreBackup, lastBackup } from './backup.js';
 import * as storage from './storage.js';
@@ -16,6 +17,7 @@ const keyboard = new KeyboardView($('keyboard'), midi);
 const debug = new DebugPanel($('debug'));
 const score = new ScoreView($('score'));
 const metronome = new Metronome();
+const player = new Player();
 const settings = storage.loadSettings();
 
 // ---- Live key display -------------------------------------------------------
@@ -52,7 +54,7 @@ function updateKeys(event) {
       return;
   }
   const notes = [...down].sort((a, b) => a - b);
-  $('now-playing').textContent = notes.map(noteName).join(' ') + (pedalDown ? '  · pedal' : '');
+  $('now-playing').textContent = notes.map(noteName).join(' ') + (pedalDown ? '  · Pedal' : '');
   $('now-playing').hidden = !notes.length && !pedalDown;
 }
 
@@ -64,10 +66,10 @@ function updateMidiPill({ state, devices }) {
     label.textContent = devices.map((d) => d.name).join(', ');
   } else if (state === 'denied' || state === 'unsupported') {
     pill.dataset.state = 'error';
-    label.textContent = 'MIDI unavailable';
+    label.textContent = 'MIDI nicht verfügbar';
   } else {
     pill.dataset.state = 'off';
-    label.textContent = 'No piano';
+    label.textContent = 'Kein Klavier';
   }
 }
 
@@ -89,7 +91,7 @@ function syncControls() {
 }
 
 // Settings that only change the display; everything else restarts the run.
-const DISPLAY_ONLY = new Set(['hints', 'zoom', 'keyboard']);
+const DISPLAY_ONLY = new Set(['hints', 'zoom', 'keyboard', 'sound']);
 
 function setSetting(key, value) {
   settings[key] = value;
@@ -99,13 +101,13 @@ function setSetting(key, value) {
   if (!DISPLAY_ONLY.has(key)) startSession();
 }
 
-// "⚙ Bars 3–4 · Loop" on the settings button, so the active section is always visible.
+// "⚙ Takte 3–4 · Wiederholen" on the settings button, so the active section is always visible.
 function renderSettingsSummary() {
   if (!piece) return;
   const { from, to } = currentSection();
   const whole = from === 1 && to === piece.measureCount;
-  const bars = whole ? 'Whole piece' : from === to ? `Bar ${from}` : `Bars ${from}–${to}`;
-  $('settings-summary').textContent = bars + (settings.loop ? ' · Loop' : '');
+  const bars = whole ? 'Ganzes Stück' : from === to ? `Takt ${from}` : `Takte ${from}–${to}`;
+  $('settings-summary').textContent = bars + (settings.loop ? ' · Wiederholen' : '');
 }
 
 // ---- Settings popover ----
@@ -182,10 +184,10 @@ $('score').addEventListener('click', (e) => {
 
 function showSectionChip(bar) {
   const chip = $('section-chip');
-  chip.replaceChildren(`Starting at bar ${bar}. Tap another bar to loop a section.`);
+  chip.replaceChildren(`Start bei Takt ${bar}. Tippe auf einen weiteren Takt, um einen Abschnitt zu wiederholen.`);
   const whole = document.createElement('button');
   whole.type = 'button';
-  whole.textContent = 'Whole piece';
+  whole.textContent = 'Ganzes Stück';
   whole.addEventListener('click', (e) => {
     e.stopPropagation();
     pendingStart = null;
@@ -238,7 +240,7 @@ async function showLibrary() {
   $('practice-view').hidden = true;
   $('library-view').hidden = false;
   $('back').hidden = true;
-  $('app-title').textContent = 'Piano Trainer';
+  $('app-title').textContent = 'Klaviertrainer';
   pieceRecord = null;
   piece = null;
 
@@ -258,13 +260,13 @@ async function showLibrary() {
   const stale = !last || Date.now() - last > 14 * 86400000;
   $('backup-reminder').hidden = !(practiced && stale);
   $('backup-reminder').textContent = last
-    ? `Last backup ${formatDate(last)}. Time for a new one: tap Backup.`
-    : 'Your progress isn\'t backed up yet. Tap Backup to save a copy.';
+    ? `Letzte Sicherung am ${formatDate(last)}. Zeit für eine neue: tippe auf „Sicherung“.`
+    : 'Dein Fortschritt ist noch nicht gesichert. Tippe auf „Sicherung“, um eine Kopie zu speichern.';
 }
 
 // ---- Backup -------------------------------------------------------------------
 
-const formatDate = (t) => new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+const formatDate = (t) => new Date(t).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
 
 function backupStatus(text) {
   $('backup-status').textContent = text;
@@ -273,7 +275,7 @@ function backupStatus(text) {
 
 $('backup-open').addEventListener('click', () => {
   const last = lastBackup();
-  $('backup-last').textContent = last ? formatDate(last) : 'never';
+  $('backup-last').textContent = last ? formatDate(last) : 'nie';
   $('backup-status').hidden = true;
   $('backup-dialog').showModal();
 });
@@ -283,26 +285,26 @@ $('backup-export').addEventListener('click', async () => {
   try {
     const result = await saveBackup();
     if (!result) return;
-    const what = `${result.pieces} pieces and ${result.runs} practice runs`;
+    const what = `${result.pieces} Stücken und ${result.runs} Übungsdurchgängen`;
     backupStatus({
-      shared: `Backup with ${what} saved.`,
-      downloaded: `Backup with ${what} downloaded.`,
-      copied: `Saving a file isn't supported here, so the backup (${what}) was copied to the clipboard. Paste it into a note to keep it; "Restore from clipboard" reads it back.`,
+      shared: `Sicherung mit ${what} gespeichert.`,
+      downloaded: `Sicherung mit ${what} heruntergeladen.`,
+      copied: `Dateien speichern geht hier nicht, daher wurde die Sicherung (mit ${what}) in die Zwischenablage kopiert. Füge sie in eine Notiz ein, um sie aufzubewahren; „Aus Zwischenablage wiederherstellen“ liest sie wieder ein.`,
     }[result.how]);
     $('backup-last').textContent = formatDate(Date.now());
     showLibrary();
   } catch (err) {
-    backupStatus(`Backup failed: ${err.message || err}`);
+    backupStatus(`Sicherung fehlgeschlagen: ${err.message || err}`);
   }
 });
 
 async function restore(source) {
   try {
     const { pieces, runs } = await restoreBackup(source);
-    backupStatus(`Restored ${pieces} pieces and ${runs} new practice runs.`);
+    backupStatus(`${pieces} Stücke und ${runs} neue Übungsdurchgänge wiederhergestellt.`);
     showLibrary();
   } catch (err) {
-    backupStatus(`Restore failed: ${err.message || err}`);
+    backupStatus(`Wiederherstellen fehlgeschlagen: ${err.message || err}`);
   }
 }
 
@@ -316,7 +318,7 @@ $('backup-paste').addEventListener('click', async () => {
   try {
     restore(await navigator.clipboard.readText());
   } catch (err) {
-    backupStatus(`Couldn't read the clipboard: ${err.message || err}`);
+    backupStatus(`Zwischenablage konnte nicht gelesen werden: ${err.message || err}`);
   }
 });
 
@@ -325,21 +327,21 @@ async function openRecord(record) {
   $('library-view').hidden = true;
   $('practice-view').hidden = false;
   $('back').hidden = false;
-  $('app-title').textContent = record.title || 'Loading…';
+  $('app-title').textContent = record.title || 'Wird geladen…';
   hideMessage();
 
   try {
     piece = await score.load(record.content);
   } catch (err) {
     piece = null;
-    showMessage(`Could not load this piece: ${err.message || err}`, [{ label: 'Back to library', action: showLibrary }]);
+    showMessage(`Dieses Stück konnte nicht geladen werden: ${err.message || err}`, [{ label: 'Zurück zur Bibliothek', action: showLibrary }]);
     return false;
   }
   pieceRecord = record;
   for (const id of ['from-bar', 'to-bar']) $(id).max = piece.measureCount;
   $('from-bar').value = 1;
   $('to-bar').value = piece.measureCount;
-  $('score-tempo').textContent = `(score: ${piece.tempo})`;
+  $('score-tempo').textContent = `(Noten: ${piece.tempo})`;
   hideSectionChip();
   renderSettingsSummary();
 
@@ -396,7 +398,15 @@ async function ensureSamples() {
   // Listed easiest first; the library shows the newest first, so count down.
   const now = Date.now();
   for (const [i, sample] of index.entries()) {
-    if (added.has(sample.id)) continue;
+    if (added.has(sample.id)) {
+      // Keep built-in pieces up to date (e.g. translated titles), unless deleted.
+      const stored = await storage.getPiece(sample.id);
+      if (stored?.builtIn && (stored.title !== sample.title || stored.composer !== sample.composer)) {
+        const content = await (await fetch(`samples/${sample.file}`)).text();
+        await storage.savePiece({ ...stored, title: sample.title, composer: sample.composer, content });
+      }
+      continue;
+    }
     const content = await (await fetch(`samples/${sample.file}`)).text();
     await storage.savePiece({
       id: sample.id,
@@ -432,6 +442,7 @@ function practiceOptions() {
 }
 
 function endSession() {
+  stopListening({ resume: false });
   if (!session) return;
   session.stop();
   // Looping sessions never "finish"; keep their result when leaving.
@@ -471,14 +482,14 @@ function startSession() {
           if (!session.hit.has(n)) score.colorNote(step.index, n, NOTE_COLOR.BAD);
         }
       } else {
-        flash('wrong', 'Wrong note');
+        flash('wrong', 'Falscher Ton');
       }
       renderStats();
     },
     onJudge: (step, note, judgement, dt) => {
       const color = { [JUDGEMENT.ON_TIME]: NOTE_COLOR.GOOD, [JUDGEMENT.MISSED]: NOTE_COLOR.BAD }[judgement] ?? NOTE_COLOR.OK;
       score.colorNote(step.index, note, color);
-      const labels = { [JUDGEMENT.ON_TIME]: 'On time', [JUDGEMENT.EARLY]: 'Early', [JUDGEMENT.LATE]: 'Late', [JUDGEMENT.MISSED]: 'Missed' };
+      const labels = { [JUDGEMENT.ON_TIME]: 'Im Takt', [JUDGEMENT.EARLY]: 'Zu früh', [JUDGEMENT.LATE]: 'Zu spät', [JUDGEMENT.MISSED]: 'Verpasst' };
       flash(judgement, dt === null ? labels[judgement] : `${labels[judgement]} ${dt > 0 ? '+' : ''}${Math.round(dt)} ms`);
       renderStats();
     },
@@ -491,7 +502,7 @@ function startSession() {
     onLap: (summary) => {
       score.clearColors();
       stepMistakes.clear();
-      showMessage(`Lap ${summary.laps}: ${formatSummary(summary)}`);
+      showMessage(`Runde ${summary.laps}: ${formatSummary(summary)}`);
       timers.push(setTimeout(hideMessage, 3000));
     },
     onFinish: async (summary) => {
@@ -510,12 +521,12 @@ function startSession() {
     session = new TempoSession(piece, options, callbacks, metronome);
     score.moveTo(session.steps[0]?.index ?? 0);
     $('restart').textContent = 'Start';
-    showMessage(`Tempo mode at ${settings.tempo} BPM: press Start, then play along after the count-in.`, [
+    showMessage(`Tempo-Modus mit ${settings.tempo} BPM: Tippe auf Start und spiele nach dem Einzählen mit.`, [
       { label: 'Start', primary: true, action: beginTempo },
     ]);
   } else {
     session = new PracticeSession(piece.steps, options, callbacks);
-    $('restart').textContent = 'Restart';
+    $('restart').textContent = 'Neustart';
     session.start();
   }
   session.options = options;
@@ -526,7 +537,7 @@ function beginTempo() {
   if (!session || session.mode !== 'tempo') return;
   metronome.unlock(); // must happen inside the tap for iOS to allow sound
   hideMessage();
-  $('restart').textContent = 'Restart';
+  $('restart').textContent = 'Neustart';
   session.start();
 }
 
@@ -541,6 +552,48 @@ function restart() {
 
 $('restart').addEventListener('click', restart);
 $('focus-restart').addEventListener('click', restart);
+
+// ---- Listening: play the piece (or the selected bars / hand) once ----
+
+function startListening() {
+  if (!piece) return;
+  endSession(); // no judging while the piece plays
+  hideMessage();
+  $('results').hidden = true;
+  player.unlock(); // inside the tap, so iOS allows sound
+
+  let output = null;
+  if (settings.sound === 'piano') {
+    output = midi.pianoOutput();
+    if (!output) flash('info', 'Kein Klavier verbunden – Wiedergabe über das iPad', 2500);
+  }
+
+  const { from, to } = currentSection();
+  score.clearColors();
+  player.play(piece, { hands: settings.hands, fromMeasure: from, toMeasure: to, tempo: settings.tempo }, output, {
+    onStep: (step) => score.moveTo(step.index),
+    onNotes: (notes) => keyboard.setPlaying(notes),
+    onEnd: () => stopListening(),
+  });
+  $('listen').textContent = '■ Stopp';
+  $('listen').classList.add('active');
+  $('focus-listen').textContent = '■';
+}
+
+// resume: start a practice run again afterwards (not when leaving the piece).
+function stopListening({ resume = true } = {}) {
+  const wasActive = $('listen').classList.contains('active');
+  player.stop();
+  keyboard.setPlaying(new Set());
+  $('listen').textContent = '▶ Anhören';
+  $('listen').classList.remove('active');
+  $('focus-listen').textContent = '▶';
+  if (wasActive && resume) startSession();
+}
+
+for (const id of ['listen', 'focus-listen']) {
+  $(id).addEventListener('click', () => (player.playing ? stopListening() : startListening()));
+}
 
 function updateHints() {
   keyboard.setExpected(settings.hints ? expected : new Set());
@@ -594,8 +647,8 @@ function showResults(summary, options, previousBest) {
 
   const pct = (x) => `${Math.round(x * 100)}%`;
   const { fromMeasure: from, toMeasure: to } = options;
-  const section = options.fullPiece ? 'Whole piece' : from === to ? `Bar ${from}` : `Bars ${from}–${to}`;
-  const hands = { both: 'both hands', right: 'right hand', left: 'left hand' }[options.hands];
+  const section = options.fullPiece ? 'Ganzes Stück' : from === to ? `Takt ${from}` : `Takte ${from}–${to}`;
+  const hands = { both: 'beide Hände', right: 'rechte Hand', left: 'linke Hand' }[options.hands];
   const mode = summary.mode === 'tempo' ? ` · ${options.tempo} BPM` : '';
 
   const card = $('results');
@@ -603,34 +656,34 @@ function showResults(summary, options, previousBest) {
   card.append(el('div', 'results-head', `${section} · ${hands}${mode}`));
 
   const big = el('div', 'results-big', pct(summary.accuracy));
-  big.append(el('small', '', ' correct'));
+  big.append(el('small', '', ' richtig'));
   card.append(big);
 
   let compare;
-  if (previousBest === null) compare = ['', 'First run with these settings'];
-  else if (summary.accuracy > previousBest) compare = ['up', `New best! Previous best was ${pct(previousBest)}`];
-  else if (summary.accuracy === previousBest) compare = ['', `Equal to your best (${pct(previousBest)})`];
-  else compare = ['', `Your best: ${pct(previousBest)}`];
+  if (previousBest === null) compare = ['', 'Erster Durchgang mit diesen Einstellungen'];
+  else if (summary.accuracy > previousBest) compare = ['up', `Neue Bestleistung! Bisher: ${pct(previousBest)}`];
+  else if (summary.accuracy === previousBest) compare = ['', `So gut wie deine Bestleistung (${pct(previousBest)})`];
+  else compare = ['', `Deine Bestleistung: ${pct(previousBest)}`];
   card.append(el('div', `results-compare ${compare[0]}`, compare[1]));
 
-  const details = [`Time ${formatTime(summary.seconds)}`, `${summary.wrong} wrong note${summary.wrong === 1 ? '' : 's'}`];
-  if (summary.mode === 'tempo') details.push(`${summary.missed} missed`, `${pct(summary.timing)} on time`);
+  const details = [`Zeit ${formatTime(summary.seconds)}`, `${summary.wrong} ${summary.wrong === 1 ? 'falscher Ton' : 'falsche Töne'}`];
+  if (summary.mode === 'tempo') details.push(`${summary.missed} verpasst`, `${pct(summary.timing)} im Takt`);
   card.append(el('div', 'results-details', details.join(' · ')));
 
   const trouble = summary.troubleMeasures.slice(0, 3);
   if (trouble.length) {
     const row = el('div', 'results-trouble');
-    row.append(el('span', '', 'Practice:'));
+    row.append(el('span', '', 'Üben:'));
     for (const t of trouble) {
-      row.append(button(`Bar ${t.measure} →`, () => setSection(t.measure, t.measure, { loop: true })));
+      row.append(button(`Takt ${t.measure} →`, () => setSection(t.measure, t.measure, { loop: true })));
     }
     card.append(row);
   } else {
-    card.append(el('div', 'results-details', 'No mistakes, well done!'));
+    card.append(el('div', 'results-details', 'Keine Fehler, super gemacht!'));
   }
 
   const actions = el('div', 'actions');
-  actions.append(button('Again', restart, true), button('Library', showLibrary));
+  actions.append(button('Nochmal', restart, true), button('Bibliothek', showLibrary));
   card.append(actions);
   card.hidden = false;
 }
@@ -643,20 +696,20 @@ function formatTime(seconds) {
 }
 
 function formatSummary(s) {
-  const trouble = s.troubleMeasures.slice(0, 3).map((t) => `bar ${t.measure}`);
-  const timing = s.mode === 'tempo' ? ` ${Math.round(s.timing * 100)}% on time.` : '';
-  return `${Math.round(s.accuracy * 100)}% correct, ${s.wrong} wrong note${s.wrong === 1 ? '' : 's'}${s.mode === 'tempo' ? `, ${s.missed} missed` : ''}, ${formatTime(s.seconds)}.${timing}`
-    + (trouble.length ? ` Practice: ${trouble.join(', ')}.` : ' No mistakes!');
+  const trouble = s.troubleMeasures.slice(0, 3).map((t) => `Takt ${t.measure}`);
+  const timing = s.mode === 'tempo' ? ` ${Math.round(s.timing * 100)} % im Takt.` : '';
+  return `${Math.round(s.accuracy * 100)} % richtig, ${s.wrong} ${s.wrong === 1 ? 'falscher Ton' : 'falsche Töne'}${s.mode === 'tempo' ? `, ${s.missed} verpasst` : ''}, ${formatTime(s.seconds)}.${timing}`
+    + (trouble.length ? ` Üben: ${trouble.join(', ')}.` : ' Keine Fehler!');
 }
 
 function renderStats() {
   if (!session) return;
   const s = session.summary();
   const items = s.mode === 'tempo'
-    ? [['good', 'On time', s.onTime], ['meh', 'Early', s.early], ['meh', 'Late', s.late], ['bad', 'Missed', s.missed], ['bad', 'Wrong', s.wrong]]
-    : [['good', '✓', s.correct], ['bad', '✗', s.wrong], ['', 'Accuracy', s.correct + s.wrong ? `${Math.round(s.accuracy * 100)}%` : '–']];
-  items.push(['', 'Time', formatTime(s.seconds)]);
-  if (session.loop) items.push(['', 'Laps', s.laps]);
+    ? [['good', 'Im Takt', s.onTime], ['meh', 'Früh', s.early], ['meh', 'Spät', s.late], ['bad', 'Verpasst', s.missed], ['bad', 'Falsch', s.wrong]]
+    : [['good', '✓', s.correct], ['bad', '✗', s.wrong], ['', 'Genauigkeit', s.correct + s.wrong ? `${Math.round(s.accuracy * 100)}%` : '–']];
+  items.push(['', 'Zeit', formatTime(s.seconds)]);
+  if (session.loop) items.push(['', 'Runden', s.laps]);
 
   $('stats').replaceChildren(
     ...items.map(([cls, label, value]) => {
@@ -727,7 +780,7 @@ simulator.onOctaveChange(simulator.baseNote);
 
 $('midi-pill').addEventListener('click', () => $('midi-dialog').showModal());
 setInterval(() => {
-  if ($('midi-dialog').open) $('midi-diagnostics').textContent = midi.status.diagnostics ?? 'No MIDI access yet.';
+  if ($('midi-dialog').open) $('midi-diagnostics').textContent = midi.status.diagnostics ?? 'Noch kein MIDI-Zugriff.';
 }, 500);
 $('midi-close').addEventListener('click', () => $('midi-dialog').close());
 $('connect').addEventListener('click', () => midi.connect());

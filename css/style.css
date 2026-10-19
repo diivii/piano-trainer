@@ -451,3 +451,10 @@ body.focus .focus-controls { display: flex; }
   -webkit-user-select: text;
   user-select: text;
 }
+
+/* ---- Listening ------------------------------------------------------------ */
+
+.key.white.playing { background: #ffd27a; }
+.key.black.playing { background: #c98a12; }
+#listen.active { border-color: var(--warn); color: var(--warn); }
+.feedback.info { background: var(--panel-2); border: 1px solid var(--border); font-size: 0.95rem; font-weight: 600; }

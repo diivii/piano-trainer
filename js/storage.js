@@ -98,7 +98,7 @@ export async function exportData() {
 // same backup twice doesn't duplicate anything.
 export async function importData(data) {
   if (data?.app !== 'piano-trainer' || !Array.isArray(data.pieces) || !Array.isArray(data.runs)) {
-    throw new Error('This file is not a Piano Trainer backup.');
+    throw new Error('Diese Datei ist keine Klaviertrainer-Sicherung.');
   }
   const key = (r) => `${r.pieceId}|${r.date}`;
   const existing = new Set((await listAllRuns()).map(key));
@@ -121,7 +121,7 @@ export async function requestPersistence() {
 // ---- Settings -----------------------------------------------------------------
 
 const SETTINGS_KEY = 'piano-trainer.settings';
-const DEFAULT_SETTINGS = { mode: 'wait', hands: 'both', loop: false, hints: true, tempo: 60, metronome: true, zoom: 1, keyboard: 'normal' };
+const DEFAULT_SETTINGS = { mode: 'wait', hands: 'both', loop: false, hints: true, tempo: 60, metronome: true, zoom: 1, keyboard: 'normal', sound: 'piano' };
 
 export function loadSettings() {
   try {

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>Piano Trainer</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    // Show startup problems on the page itself (there's no console on the iPad).
+    (() => {
+      const problems = [];
+      const render = () => {
+        const box = document.getElementById('startup-error');
+        if (!box || !problems.length) return;
+        box.textContent = problems.join('\n');
+        box.hidden = false;
+      };
+      const show = (text) => {
+        problems.push(text);
+        render();
+      };
+      window.addEventListener('error', (e) => show(`Error: ${e.message} (${(e.filename || '').split('/').pop()}:${e.lineno})`));
+      window.addEventListener('unhandledrejection', (e) => show(`Error: ${e.reason?.message || e.reason}`));
+      window.addEventListener('load', () => {
+        if (location.protocol === 'file:') {
+          show('This page was opened as a file. Start it with start-server.cmd and open http://localhost:8000 instead.');
+        } else if (!window.opensheetmusicdisplay) {
+          show('The sheet music library could not be loaded (no internet, or blocked by an ad blocker?).');
+        } else if (!window.pianoTrainer) {
+          show('The app failed to start. Try a hard refresh (Ctrl+Shift+R).');
+        }
+        render(); // errors from before the page was parsed
+      });
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@2.2.1/build/opensheetmusicdisplay.min.js"></script>
+</head>
+<body>
+  <div id="startup-error" class="startup-error" hidden></div>
+  <header>
+    <h1>Piano Trainer</h1>
+    <div class="now">
+      <span class="caption">Playing</span>
+      <span id="held" class="held">–</span>
+      <span id="pedal" class="pedal">Pedal: up</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="toolbar">
+      <label class="file-button">
+        Open piece…
+        <input id="file" type="file" accept=".musicxml,.xml,.mxl" hidden>
+      </label>
+      <button id="load-sample" type="button">Sample: Ode to Joy</button>
+
+      <span class="sep"></span>
+
+      <label>Hands
+        <select id="hands">
+          <option value="both">Both</option>
+          <option value="right">Right</option>
+          <option value="left">Left</option>
+        </select>
+      </label>
+      <label>Bars
+        <input id="from-bar" type="number" min="1" value="1">
+        –
+        <input id="to-bar" type="number" min="1" value="1">
+      </label>
+      <label><input id="loop" type="checkbox"> Loop</label>
+      <label><input id="hints" type="checkbox" checked> Key hints</label>
+      <button id="restart" type="button">Restart</button>
+    </section>
+
+    <section class="stats">
+      <span id="piece-title" class="piece-title">No piece loaded</span>
+      <div class="progress"><div id="progress-bar"></div></div>
+      <span>✓ <b id="stat-correct">0</b></span>
+      <span>✗ <b id="stat-wrong">0</b></span>
+      <span>Accuracy <b id="stat-accuracy">–</b></span>
+      <span>Time <b id="stat-time">0:00</b></span>
+      <span id="stat-laps-wrap" hidden>Laps <b id="stat-laps">0</b></span>
+    </section>
+    <div id="message" class="message" hidden></div>
+
+    <section id="score" class="score"></section>
+
+    <section id="keyboard" class="keyboard-wrap"></section>
+
+    <section class="help">
+      <strong>Simulator:</strong>
+      <kbd>A</kbd>–<kbd>'</kbd> white keys,
+      <kbd>W</kbd> <kbd>E</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> <kbd>O</kbd> <kbd>P</kbd> black keys,
+      <kbd>Z</kbd>/<kbd>X</kbd> octave (<span id="sim-octave"></span>),
+      <kbd>Space</kbd> pedal, hold <kbd>Shift</kbd> for loud.
+      Or click / touch the keys.
+    </section>
+
+    <details id="debug" class="debug">
+      <summary class="debug-head">
+        <h2>MIDI</h2>
+        <span data-status class="status">Not connected</span>
+        <button id="connect" type="button">Reconnect</button>
+        <span data-counts class="counts">on 0 · off 0 · pedal 0 · cc 0</span>
+        <button data-clear type="button">Clear log</button>
+      </summary>
+      <ul data-devices class="devices"></ul>
+      <div data-log class="log"></div>
+    </details>
+  </main>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

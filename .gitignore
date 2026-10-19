@@ -1,0 +1,10 @@
+# Local tool settings
+.claude/
+
+# Python
+__pycache__/
+
+# OS / editor clutter
+Thumbs.db
+.DS_Store
+.vscode/

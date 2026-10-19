@@ -84,14 +84,120 @@ function syncControls() {
   }
   $('tempo').value = settings.tempo;
   $('practice-view').classList.toggle('mode-tempo', settings.mode === 'tempo');
+  keyboard.setStrip(settings.keyboard === 'strip');
+  renderSettingsSummary();
 }
+
+// Settings that only change the display; everything else restarts the run.
+const DISPLAY_ONLY = new Set(['hints', 'zoom', 'keyboard']);
 
 function setSetting(key, value) {
   settings[key] = value;
   storage.saveSettings(settings);
   syncControls();
   if (key === 'hints') updateHints();
-  else if (key !== 'zoom') startSession();
+  if (!DISPLAY_ONLY.has(key)) startSession();
+}
+
+// "⚙ Bars 3–4 · Loop" on the settings button, so the active section is always visible.
+function renderSettingsSummary() {
+  if (!piece) return;
+  const { from, to } = currentSection();
+  const whole = from === 1 && to === piece.measureCount;
+  const bars = whole ? 'Whole piece' : from === to ? `Bar ${from}` : `Bars ${from}–${to}`;
+  $('settings-summary').textContent = bars + (settings.loop ? ' · Loop' : '');
+}
+
+// ---- Settings popover ----
+
+$('settings-open').addEventListener('click', (e) => {
+  e.stopPropagation();
+  $('settings-panel').hidden = !$('settings-panel').hidden;
+});
+$('settings-panel').addEventListener('click', (e) => e.stopPropagation());
+document.addEventListener('click', () => ($('settings-panel').hidden = true));
+
+$('keyboard-toggle').addEventListener('click', () =>
+  setSetting('keyboard', settings.keyboard === 'strip' ? 'normal' : 'strip'));
+
+// ---- Section (bar range) ----
+
+function currentSection() {
+  const max = piece?.measureCount ?? 1;
+  const clamp = (n, fallback) => Math.min(max, Math.max(1, Math.round(n) || fallback));
+  let from = clamp(Number($('from-bar').value), 1);
+  let to = clamp(Number($('to-bar').value), max);
+  if (from > to) [from, to] = [to, from];
+  return { from, to };
+}
+
+function setSection(from, to, { loop } = {}) {
+  $('from-bar').value = from;
+  $('to-bar').value = to;
+  if (loop !== undefined && loop !== settings.loop) {
+    settings.loop = loop;
+    storage.saveSettings(settings);
+    syncControls();
+  }
+  applySection();
+}
+
+function applySection() {
+  const { from, to } = currentSection();
+  $('from-bar').value = from;
+  $('to-bar').value = to;
+  const whole = from === 1 && to === piece.measureCount;
+  score.setSection(whole ? null : { from, to });
+  hideSectionChip();
+  renderSettingsSummary();
+  startSession();
+}
+
+for (const id of ['from-bar', 'to-bar']) $(id).addEventListener('change', applySection);
+$('whole-piece').addEventListener('click', () => setSection(1, piece.measureCount, { loop: false }));
+
+// Tapping bars in the music: first tap starts there, a second tap picks the
+// end of a section to loop. A tap while a section is set starts a new one.
+let pendingStart = null;
+
+$('score').addEventListener('click', (e) => {
+  if (!piece || e.target.closest('button') || !$('settings-panel').hidden) return;
+  const bar = score.measureAt(e.clientX, e.clientY);
+  if (bar === null) return;
+
+  if (pendingStart === null) {
+    pendingStart = bar;
+    $('from-bar').value = bar;
+    $('to-bar').value = piece.measureCount;
+    score.setSection({ from: bar, to: bar, pending: true });
+    showSectionChip(bar);
+    renderSettingsSummary();
+    startSession();
+  } else {
+    const [from, to] = [Math.min(pendingStart, bar), Math.max(pendingStart, bar)];
+    pendingStart = null;
+    setSection(from, to, { loop: true });
+  }
+});
+
+function showSectionChip(bar) {
+  const chip = $('section-chip');
+  chip.replaceChildren(`Starting at bar ${bar}. Tap another bar to loop a section.`);
+  const whole = document.createElement('button');
+  whole.type = 'button';
+  whole.textContent = 'Whole piece';
+  whole.addEventListener('click', (e) => {
+    e.stopPropagation();
+    pendingStart = null;
+    setSection(1, piece.measureCount, { loop: false });
+  });
+  chip.append(whole);
+  chip.hidden = false;
+}
+
+function hideSectionChip() {
+  pendingStart = null;
+  $('section-chip').hidden = true;
 }
 
 for (const group of document.querySelectorAll('.segmented')) {
@@ -108,8 +214,6 @@ const clampTempo = (bpm) => Math.min(240, Math.max(20, Math.round(bpm) || 60));
 $('tempo').addEventListener('change', () => setSetting('tempo', clampTempo(Number($('tempo').value))));
 $('tempo-down').addEventListener('click', () => setSetting('tempo', clampTempo(settings.tempo - 5)));
 $('tempo-up').addEventListener('click', () => setSetting('tempo', clampTempo(settings.tempo + 5)));
-for (const id of ['from-bar', 'to-bar']) $(id).addEventListener('change', startSession);
-
 $('zoom-in').addEventListener('click', () => changeZoom(0.1));
 $('zoom-out').addEventListener('click', () => changeZoom(-0.1));
 function changeZoom(delta) {
@@ -236,6 +340,13 @@ async function openRecord(record) {
   $('from-bar').value = 1;
   $('to-bar').value = piece.measureCount;
   $('score-tempo').textContent = `(score: ${piece.tempo})`;
+  hideSectionChip();
+  renderSettingsSummary();
+
+  // Only show the part of the keyboard this piece uses, so the keys are bigger.
+  const pitches = piece.steps.flatMap((s) => s.notes.map((n) => n.midi));
+  if (pitches.length) keyboard.setRange(Math.min(...pitches), Math.max(...pitches));
+
   startSession();
   return true;
 }
@@ -293,8 +404,7 @@ const stepMistakes = new Set(); // wait mode: steps where a wrong note was playe
 let timers = [];
 
 function practiceOptions() {
-  const from = Number($('from-bar').value) || 1;
-  const to = Number($('to-bar').value) || piece.measureCount;
+  const { from, to } = currentSection();
   return {
     hands: settings.hands,
     fromMeasure: from,
@@ -321,6 +431,7 @@ function startSession() {
   endSession();
   if (!piece) return;
   hideMessage();
+  $('results').hidden = true;
   score.clearColors();
   stepMistakes.clear();
   expected = new Set();
@@ -368,16 +479,15 @@ function startSession() {
       showMessage(`Lap ${summary.laps}: ${formatSummary(summary)}`);
       timers.push(setTimeout(hideMessage, 3000));
     },
-    onFinish: (summary) => {
+    onFinish: async (summary) => {
       expected = new Set();
       updateHints();
       score.hideCursor();
       renderStats();
-      recordRun(summary);
-      showMessage(`Finished! ${formatSummary(summary)}`, [
-        { label: 'Again', primary: true, action: restart },
-        { label: 'Library', action: showLibrary },
-      ]);
+      const options = session.options;
+      const previousBest = await bestAccuracy(options, summary.mode);
+      await recordRun(summary);
+      showResults(summary, options, previousBest);
     },
   };
 
@@ -421,10 +531,10 @@ function updateHints() {
   keyboard.setExpected(settings.hints ? expected : new Set());
 }
 
-function recordRun(summary) {
+async function recordRun(summary) {
   if (!pieceRecord || !session || summary.correct + summary.wrong + (summary.missed ?? 0) === 0) return;
   const o = session.options;
-  storage.saveRun({
+  await storage.saveRun({
     pieceId: pieceRecord.id,
     date: Date.now(),
     mode: summary.mode,
@@ -440,6 +550,74 @@ function recordRun(summary) {
     mistakesByMeasure: summary.mistakesByMeasure,
     tempo: summary.mode === 'tempo' ? o.tempo : null,
   });
+}
+
+// Best accuracy of earlier completed runs with the same mode, hands and bars.
+async function bestAccuracy(options, mode) {
+  if (!pieceRecord) return null;
+  const runs = (await storage.listRuns(pieceRecord.id)).filter((r) =>
+    r.completed && r.mode === mode && r.hands === options.hands
+    && r.fromMeasure === options.fromMeasure && r.toMeasure === options.toMeasure);
+  return runs.length ? Math.max(...runs.map((r) => r.accuracy)) : null;
+}
+
+// ---- Results card ----
+
+function showResults(summary, options, previousBest) {
+  const el = (tag, className, text) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
+  const button = (label, action, primary = false) => {
+    const b = el('button', primary ? 'primary' : '', label);
+    b.type = 'button';
+    b.addEventListener('click', action);
+    return b;
+  };
+
+  const pct = (x) => `${Math.round(x * 100)}%`;
+  const { fromMeasure: from, toMeasure: to } = options;
+  const section = options.fullPiece ? 'Whole piece' : from === to ? `Bar ${from}` : `Bars ${from}–${to}`;
+  const hands = { both: 'both hands', right: 'right hand', left: 'left hand' }[options.hands];
+  const mode = summary.mode === 'tempo' ? ` · ${options.tempo} BPM` : '';
+
+  const card = $('results');
+  card.replaceChildren();
+  card.append(el('div', 'results-head', `${section} · ${hands}${mode}`));
+
+  const big = el('div', 'results-big', pct(summary.accuracy));
+  big.append(el('small', '', ' correct'));
+  card.append(big);
+
+  let compare;
+  if (previousBest === null) compare = ['', 'First run with these settings'];
+  else if (summary.accuracy > previousBest) compare = ['up', `New best! Previous best was ${pct(previousBest)}`];
+  else if (summary.accuracy === previousBest) compare = ['', `Equal to your best (${pct(previousBest)})`];
+  else compare = ['', `Your best: ${pct(previousBest)}`];
+  card.append(el('div', `results-compare ${compare[0]}`, compare[1]));
+
+  const details = [`Time ${formatTime(summary.seconds)}`, `${summary.wrong} wrong note${summary.wrong === 1 ? '' : 's'}`];
+  if (summary.mode === 'tempo') details.push(`${summary.missed} missed`, `${pct(summary.timing)} on time`);
+  card.append(el('div', 'results-details', details.join(' · ')));
+
+  const trouble = summary.troubleMeasures.slice(0, 3);
+  if (trouble.length) {
+    const row = el('div', 'results-trouble');
+    row.append(el('span', '', 'Practice:'));
+    for (const t of trouble) {
+      row.append(button(`Bar ${t.measure} →`, () => setSection(t.measure, t.measure, { loop: true })));
+    }
+    card.append(row);
+  } else {
+    card.append(el('div', 'results-details', 'No mistakes, well done!'));
+  }
+
+  const actions = el('div', 'actions');
+  actions.append(button('Again', restart, true), button('Library', showLibrary));
+  card.append(actions);
+  card.hidden = false;
 }
 
 // ---- Stats & messages ---------------------------------------------------------

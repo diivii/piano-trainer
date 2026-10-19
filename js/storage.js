@@ -121,7 +121,7 @@ export async function requestPersistence() {
 // ---- Settings -----------------------------------------------------------------
 
 const SETTINGS_KEY = 'piano-trainer.settings';
-const DEFAULT_SETTINGS = { mode: 'wait', hands: 'both', loop: false, hints: true, tempo: 60, metronome: true, zoom: 1 };
+const DEFAULT_SETTINGS = { mode: 'wait', hands: 'both', loop: false, hints: true, tempo: 60, metronome: true, zoom: 1, keyboard: 'normal' };
 
 export function loadSettings() {
   try {

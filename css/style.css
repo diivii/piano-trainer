@@ -238,16 +238,20 @@ body.focus .focus-controls { display: flex; }
 
 /* ---- Piano --------------------------------------------------------------- */
 
-.keyboard-wrap { width: 100%; flex: none; }
+.keyboard-wrap { position: relative; width: 100%; flex: none; }
 
 .piano {
   position: relative;
   width: 100%;
-  aspect-ratio: 52 / 6;
-  min-height: 110px;
-  max-height: 22vh;
+  height: clamp(90px, 18vh, 170px);
   touch-action: none;
+  transition: height 0.15s;
 }
+
+/* Thin strip: just enough to see the hints and what's being played. */
+.keyboard-wrap.strip .piano { height: 34px; }
+.keyboard-wrap.strip .label { display: none; }
+.keyboard-wrap.strip .key.black { height: 58%; }
 
 .key { position: absolute; top: 0; border-radius: 0 0 4px 4px; }
 
@@ -341,3 +345,96 @@ body.focus .focus-controls { display: flex; }
 
 .library-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .hint.warn { color: var(--warn); }
+
+/* ---- Toolbar popover ------------------------------------------------------ */
+
+.toolbar { position: relative; }
+
+.popover {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 20;
+  width: min(460px, 94vw);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.popover-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem; }
+.popover-label { width: 5.5rem; color: var(--muted); font-size: 0.9rem; }
+.popover input[type="number"] {
+  width: 3.6rem;
+  min-height: var(--tap);
+  text-align: center;
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.icon-button.small { min-height: 30px; min-width: 36px; padding: 0 0.4rem; font-size: 0.95rem; }
+
+/* ---- Bar selection in the score ------------------------------------------ */
+
+.bar-layer { position: absolute; left: 0; top: 0; pointer-events: none; }
+.bar-mark {
+  position: absolute;
+  background: rgba(79, 163, 255, 0.12);
+  border: 2px solid rgba(79, 163, 255, 0.55);
+  border-radius: 4px;
+}
+.bar-layer.pending .bar-mark { border-style: dashed; }
+.score { cursor: pointer; overflow-x: hidden; }
+
+.section-chip {
+  position: absolute;
+  top: 0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.3rem 0.4rem 0.3rem 0.9rem;
+  background: rgba(20, 30, 45, 0.95);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  font-size: 0.9rem;
+  z-index: 5;
+  white-space: nowrap;
+}
+.section-chip button { min-height: 34px; border-radius: 999px; }
+
+/* ---- Results card --------------------------------------------------------- */
+
+.results {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, 92%);
+  z-index: 10;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  padding: 1.2rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  text-align: center;
+}
+.results-head { color: var(--muted); font-size: 0.9rem; }
+.results-big { font-size: 3rem; font-weight: 700; line-height: 1.1; }
+.results-big small { font-size: 1rem; font-weight: 400; color: var(--muted); }
+.results-compare { color: var(--muted); }
+.results-compare.up { color: var(--ok); font-weight: 600; }
+.results-details { color: var(--muted); font-size: 0.9rem; }
+.results-trouble { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.4rem; }
+.results-trouble span { color: var(--warn); font-size: 0.9rem; }
+.results .actions { display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.3rem; }

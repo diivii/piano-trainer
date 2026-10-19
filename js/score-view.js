@@ -31,14 +31,25 @@ export class ScoreView {
     this.stepNotes = []; // step index -> OSMD notes, parallel to step.notes
     this.colors = new Map(); // step index -> [color per note]
     this.cursorIndex = 0;
+    this.section = null; // { from, to, pending } highlighted bars
+
+    // Every render (including the library's own on window resize) redraws the
+    // SVG, so note colors and bar highlights are re-applied afterwards.
+    const render = this.osmd.render.bind(this.osmd);
+    this.osmd.render = () => {
+      render();
+      this.afterRender();
+    };
   }
 
   // content: MusicXML text, or the binary string of a compressed .mxl file.
   async load(content) {
+    this.colors.clear();
+    this.section = null;
+    this.steps = [];
     await this.osmd.load(content);
     this.osmd.render();
     this.osmd.cursor.show();
-    this.colors.clear();
     this.steps = this.extractSteps();
     this.moveTo(0);
     const sheet = this.osmd.Sheet;
@@ -114,12 +125,85 @@ export class ScoreView {
 
   setZoom(zoom) {
     this.osmd.zoom = Math.min(2, Math.max(0.5, zoom));
+    if (this.steps.length) this.osmd.render();
+  }
+
+  afterRender() {
     if (!this.steps.length) return;
-    this.osmd.render(); // redraws the SVG, so colors have to be applied again
     for (const [stepIndex, colors] of this.colors) {
       colors.forEach((color, i) => color && this.paint(this.stepNotes[stepIndex][i], color));
     }
     this.osmd.cursor.update();
+    this.drawSection();
+  }
+
+  // ---- Bars: hit testing and highlighting ----
+
+  // Screen rectangles of every bar (spanning all staves), relative to the SVG.
+  measureBoxes() {
+    const unit = 10 * this.osmd.zoom; // OSMD layout units -> pixels
+    const pad = 2.5; // room above/below the staves for ledger notes
+    const staffHeight = 4; // five staff lines span four units
+    const boxes = [];
+    for (const staves of this.osmd.GraphicSheet?.MeasureList ?? []) {
+      const list = staves.filter(Boolean);
+      if (!list.length) continue;
+      const first = list[0].PositionAndShape;
+      const last = list.at(-1).PositionAndShape;
+      boxes.push({
+        number: list[0].MeasureNumber ?? list[0].parentSourceMeasure?.MeasureNumber,
+        left: (first.AbsolutePosition.x + first.BorderLeft) * unit,
+        right: (first.AbsolutePosition.x + first.BorderRight) * unit,
+        // From the staff lines rather than the content, so all bars of a line line up.
+        top: (first.AbsolutePosition.y - pad) * unit,
+        bottom: (last.AbsolutePosition.y + staffHeight + pad) * unit,
+      });
+    }
+    return boxes;
+  }
+
+  svgOffset() {
+    const svg = this.container.querySelector('svg');
+    if (!svg) return null;
+    const s = svg.getBoundingClientRect();
+    const c = this.container.getBoundingClientRect();
+    return { x: s.left - c.left + this.container.scrollLeft, y: s.top - c.top + this.container.scrollTop, rect: s };
+  }
+
+  // Bar number at a screen position, or null.
+  measureAt(clientX, clientY) {
+    const offset = this.svgOffset();
+    if (!offset) return null;
+    const x = clientX - offset.rect.left;
+    const y = clientY - offset.rect.top;
+    return this.measureBoxes().find((b) => x >= b.left && x <= b.right && y >= b.top && y <= b.bottom)?.number ?? null;
+  }
+
+  // Highlight bars from..to; pending = only the start has been picked so far.
+  setSection(section) {
+    this.section = section;
+    this.drawSection();
+  }
+
+  drawSection() {
+    this.container.querySelector('.bar-layer')?.remove();
+    const offset = this.svgOffset();
+    if (!this.section || !offset) return;
+    const layer = document.createElement('div');
+    layer.className = `bar-layer${this.section.pending ? ' pending' : ''}`;
+    for (const box of this.measureBoxes()) {
+      if (box.number < this.section.from || box.number > this.section.to) continue;
+      const mark = document.createElement('div');
+      mark.className = 'bar-mark';
+      Object.assign(mark.style, {
+        left: `${offset.x + box.left}px`,
+        top: `${offset.y + box.top}px`,
+        width: `${box.right - box.left}px`,
+        height: `${box.bottom - box.top}px`,
+      });
+      layer.append(mark);
+    }
+    this.container.append(layer);
   }
 
   // Color one note of a step (matched by MIDI pitch), or all of them.

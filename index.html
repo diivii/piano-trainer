@@ -77,39 +77,62 @@
         <button type="button" data-value="both">Both</button>
         <button type="button" data-value="right">Right</button>
       </div>
-      <label class="field">Bars
-        <input id="from-bar" type="number" min="1" value="1" inputmode="numeric">
-        <span>–</span>
-        <input id="to-bar" type="number" min="1" value="1" inputmode="numeric">
-      </label>
       <div class="tempo-only field">
         <button id="tempo-down" class="icon-button" type="button" aria-label="Slower">−</button>
         <input id="tempo" type="number" min="20" max="240" inputmode="numeric">
         <button id="tempo-up" class="icon-button" type="button" aria-label="Faster">+</button>
         <span class="unit">BPM <small id="score-tempo"></small></span>
       </div>
-      <div class="toggles">
-        <button type="button" class="toggle" data-toggle="loop">Loop</button>
-        <button type="button" class="toggle" data-toggle="hints">Key hints</button>
-        <button type="button" class="toggle tempo-only" data-toggle="metronome">Metronome</button>
-      </div>
       <div class="toolbar-end">
-        <button id="zoom-out" class="icon-button" type="button" aria-label="Smaller notes">A−</button>
-        <button id="zoom-in" class="icon-button" type="button" aria-label="Bigger notes">A+</button>
+        <button id="settings-open" class="button" type="button" aria-haspopup="true">
+          ⚙ <span id="settings-summary">Bars 1–1</span>
+        </button>
         <button id="focus" class="icon-button" type="button" aria-label="Focus mode">⤢</button>
         <button id="restart" class="button primary" type="button">Restart</button>
+      </div>
+
+      <div id="settings-panel" class="popover" hidden>
+        <div class="popover-row">
+          <span class="popover-label">Bars</span>
+          <input id="from-bar" type="number" min="1" value="1" inputmode="numeric">
+          <span>–</span>
+          <input id="to-bar" type="number" min="1" value="1" inputmode="numeric">
+          <button id="whole-piece" class="button" type="button">Whole piece</button>
+        </div>
+        <div class="popover-row">
+          <span class="popover-label">Practice</span>
+          <button type="button" class="toggle" data-toggle="loop">Loop</button>
+          <button type="button" class="toggle" data-toggle="hints">Key hints</button>
+          <button type="button" class="toggle tempo-only" data-toggle="metronome">Metronome</button>
+        </div>
+        <div class="popover-row">
+          <span class="popover-label">Notes</span>
+          <button id="zoom-out" class="icon-button" type="button" aria-label="Smaller notes">A−</button>
+          <button id="zoom-in" class="icon-button" type="button" aria-label="Bigger notes">A+</button>
+        </div>
+        <div class="popover-row">
+          <span class="popover-label">Keyboard</span>
+          <div class="segmented" data-setting="keyboard">
+            <button type="button" data-value="normal">Normal</button>
+            <button type="button" data-value="strip">Thin strip</button>
+          </div>
+        </div>
+        <p class="hint">Tip: tap a bar in the music to start there; tap a second bar to loop that section.</p>
       </div>
     </section>
 
     <section class="stats">
       <div class="progress"><div id="progress-bar"></div></div>
       <div id="stats" class="stat-list"></div>
+      <button id="keyboard-toggle" class="icon-button small" type="button" aria-label="Keyboard size">⌨</button>
     </section>
 
     <div class="score-wrap">
       <section id="score" class="score"></section>
       <div id="feedback" class="feedback" hidden></div>
+      <div id="section-chip" class="section-chip" hidden></div>
       <div id="message" class="message" hidden></div>
+      <div id="results" class="results" hidden></div>
       <div class="focus-controls">
         <button id="focus-restart" class="icon-button" type="button" aria-label="Restart">↻</button>
         <button id="focus-exit" class="icon-button" type="button" aria-label="Exit focus mode">✕</button>

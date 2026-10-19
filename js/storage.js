@@ -78,6 +78,46 @@ export async function pieceStats(pieceId) {
   };
 }
 
+// ---- Backup -------------------------------------------------------------------
+
+const listAllRuns = () => tx('runs', 'readonly', (s) => s.getAll());
+
+export async function exportData() {
+  return {
+    app: 'piano-trainer',
+    version: 1,
+    exportedAt: Date.now(),
+    settings: loadSettings(),
+    pieces: await listPieces(),
+    runs: (await listAllRuns()).map(({ id, ...run }) => run),
+  };
+}
+
+// Merges a backup into what's stored: pieces with the same id are replaced,
+// runs already present (same piece and time) are skipped, so restoring the
+// same backup twice doesn't duplicate anything.
+export async function importData(data) {
+  if (data?.app !== 'piano-trainer' || !Array.isArray(data.pieces) || !Array.isArray(data.runs)) {
+    throw new Error('This file is not a Piano Trainer backup.');
+  }
+  const key = (r) => `${r.pieceId}|${r.date}`;
+  const existing = new Set((await listAllRuns()).map(key));
+  const newRuns = data.runs.filter((r) => !existing.has(key(r))).map(({ id, ...run }) => run);
+
+  await tx('pieces', 'readwrite', (s) => data.pieces.forEach((p) => s.put(p)));
+  await tx('runs', 'readwrite', (s) => newRuns.forEach((r) => s.add(r)));
+  return { pieces: data.pieces.length, runs: newRuns.length };
+}
+
+// Ask the browser not to clear our data under storage pressure (best effort).
+export async function requestPersistence() {
+  try {
+    return (await navigator.storage?.persist?.()) ?? false;
+  } catch {
+    return false;
+  }
+}
+
 // ---- Settings -----------------------------------------------------------------
 
 const SETTINGS_KEY = 'piano-trainer.settings';

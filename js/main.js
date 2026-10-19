@@ -6,6 +6,7 @@ import { PracticeSession } from './practice.js';
 import { TempoSession, JUDGEMENT } from './tempo-practice.js';
 import { Metronome } from './metronome.js';
 import { renderLibrary } from './library-view.js';
+import { saveBackup, restoreBackup, lastBackup } from './backup.js';
 import * as storage from './storage.js';
 
 const $ = (id) => document.getElementById(id);
@@ -146,7 +147,74 @@ async function showLibrary() {
       showLibrary();
     },
   });
+
+  // Nudge towards a backup once there's practice history worth keeping.
+  const practiced = items.some((i) => i.stats);
+  const last = lastBackup();
+  const stale = !last || Date.now() - last > 14 * 86400000;
+  $('backup-reminder').hidden = !(practiced && stale);
+  $('backup-reminder').textContent = last
+    ? `Last backup ${formatDate(last)}. Time for a new one: tap Backup.`
+    : 'Your progress isn\'t backed up yet. Tap Backup to save a copy.';
 }
+
+// ---- Backup -------------------------------------------------------------------
+
+const formatDate = (t) => new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+
+function backupStatus(text) {
+  $('backup-status').textContent = text;
+  $('backup-status').hidden = false;
+}
+
+$('backup-open').addEventListener('click', () => {
+  const last = lastBackup();
+  $('backup-last').textContent = last ? formatDate(last) : 'never';
+  $('backup-status').hidden = true;
+  $('backup-dialog').showModal();
+});
+$('backup-close').addEventListener('click', () => $('backup-dialog').close());
+
+$('backup-export').addEventListener('click', async () => {
+  try {
+    const result = await saveBackup();
+    if (!result) return;
+    const what = `${result.pieces} pieces and ${result.runs} practice runs`;
+    backupStatus({
+      shared: `Backup with ${what} saved.`,
+      downloaded: `Backup with ${what} downloaded.`,
+      copied: `Saving a file isn't supported here, so the backup (${what}) was copied to the clipboard. Paste it into a note to keep it; "Restore from clipboard" reads it back.`,
+    }[result.how]);
+    $('backup-last').textContent = formatDate(Date.now());
+    showLibrary();
+  } catch (err) {
+    backupStatus(`Backup failed: ${err.message || err}`);
+  }
+});
+
+async function restore(source) {
+  try {
+    const { pieces, runs } = await restoreBackup(source);
+    backupStatus(`Restored ${pieces} pieces and ${runs} new practice runs.`);
+    showLibrary();
+  } catch (err) {
+    backupStatus(`Restore failed: ${err.message || err}`);
+  }
+}
+
+$('backup-file').addEventListener('change', () => {
+  const file = $('backup-file').files[0];
+  $('backup-file').value = '';
+  if (file) restore(file);
+});
+
+$('backup-paste').addEventListener('click', async () => {
+  try {
+    restore(await navigator.clipboard.readText());
+  } catch (err) {
+    backupStatus(`Couldn't read the clipboard: ${err.message || err}`);
+  }
+});
 
 async function openRecord(record) {
   // The score must be visible while rendering, or it gets laid out at zero width.
@@ -480,5 +548,6 @@ window.pianoTrainer = {
 syncControls();
 score.setZoom(settings.zoom);
 midi.connect();
+storage.requestPersistence();
 await ensureSample();
 await showLibrary();

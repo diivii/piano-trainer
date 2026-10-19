@@ -25,7 +25,7 @@
         if (location.protocol === 'file:') {
           show('This page was opened as a file. Start it with start-server.cmd and open http://localhost:8000 instead.');
         } else if (!window.opensheetmusicdisplay) {
-          show('The sheet music library could not be loaded (no internet, or blocked by an ad blocker?).');
+          show('The sheet music library (vendor/opensheetmusicdisplay.min.js) could not be loaded.');
         } else if (!window.pianoTrainer) {
           show('The app failed to start. Try a hard refresh (Ctrl+Shift+R).');
         }
@@ -33,7 +33,8 @@
       });
     })();
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@2.2.1/build/opensheetmusicdisplay.min.js"></script>
+  <!-- OpenSheetMusicDisplay 2.2.1 (BSD-3, see vendor/OSMD-LICENSE.txt), bundled so no CDN is needed -->
+  <script src="vendor/opensheetmusicdisplay.min.js"></script>
 </head>
 <body>
   <div id="startup-error" class="startup-error" hidden></div>
@@ -51,12 +52,16 @@
   <main id="library-view" class="library-view">
     <div class="library-head">
       <h2>Your pieces</h2>
-      <label class="button primary">
-        + Import piece
-        <input id="file" type="file" accept=".musicxml,.xml,.mxl" hidden>
-      </label>
+      <div class="library-actions">
+        <button id="backup-open" class="button" type="button">Backup</button>
+        <label class="button primary">
+          + Import piece
+          <input id="file" type="file" accept=".musicxml,.xml,.mxl" hidden>
+        </label>
+      </div>
     </div>
     <p class="hint">MusicXML files (.musicxml, .xml, .mxl). Pieces and progress are stored on this device.</p>
+    <p id="backup-reminder" class="hint warn" hidden></p>
     <div id="library" class="library"></div>
   </main>
 
@@ -141,6 +146,30 @@
         <kbd>Z</kbd>/<kbd>X</kbd> octave (<span id="sim-octave"></span>),
         <kbd>Space</kbd> pedal, hold <kbd>Shift</kbd> for loud. Or touch the on-screen keys.
       </p>
+    </div>
+  </dialog>
+
+  <!-- ===== Backup ===== -->
+  <dialog id="backup-dialog" class="midi-dialog">
+    <div class="debug">
+      <div class="debug-head">
+        <h2>Backup</h2>
+        <button id="backup-close" class="icon-button" type="button" aria-label="Close">✕</button>
+      </div>
+      <p class="hint">
+        Pieces and practice history are only stored in this browser on this device. iOS can clear website data,
+        so save a backup now and then, e.g. to iCloud Drive via the Files app.
+      </p>
+      <p>Last backup: <b id="backup-last">never</b></p>
+      <div class="library-actions">
+        <button id="backup-export" class="button primary" type="button">Save backup</button>
+        <label class="button">
+          Restore from backup…
+          <input id="backup-file" type="file" accept=".json,application/json" hidden>
+        </label>
+        <button id="backup-paste" class="button" type="button">Restore from clipboard</button>
+      </div>
+      <p id="backup-status" class="hint" hidden></p>
     </div>
   </dialog>
 

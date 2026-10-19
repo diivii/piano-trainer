@@ -296,7 +296,7 @@ body.focus .focus-controls { display: flex; }
 
 .debug { padding: 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
 .debug-head, .log-head { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
-.debug-head #midi-close { margin-left: auto; }
+.debug-head > .icon-button:last-child { margin-left: auto; }
 .log-head .counts { margin-left: auto; color: var(--muted); font-size: 0.85rem; }
 
 .status { font-weight: 600; }
@@ -336,3 +336,8 @@ body.focus .focus-controls { display: flex; }
   .toolbar-end { margin-left: 0; }
   .stat-list { gap: 0.6rem; font-size: 0.8rem; }
 }
+
+/* ---- Backup -------------------------------------------------------------- */
+
+.library-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.hint.warn { color: var(--warn); }

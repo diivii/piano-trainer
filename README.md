@@ -68,4 +68,4 @@ GitHub Pages serves the `main` branch. Push, wait ~1 minute, reload on the iPad.
 | `js/debug-panel.js` | MIDI event log |
 | `vendor/` | Bundled OpenSheetMusicDisplay 2.2.1 (BSD-3 license) |
 | `tools/serve.py` | Local no-cache dev server |
-| `tools/make_sample.py` | Generates the sample piece in `samples/` |
+| `tools/make_samples.py` | Generates the built-in sample pieces and `samples/index.json` |

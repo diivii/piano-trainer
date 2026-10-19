@@ -380,20 +380,35 @@ $('file').addEventListener('change', () => {
 
 $('back').addEventListener('click', showLibrary);
 
-// The sample piece is added once, so it can be deleted like any other.
-async function ensureSample() {
-  const flag = 'piano-trainer.sample-added';
-  if (localStorage.getItem(flag)) return;
-  const res = await fetch('samples/ode-to-joy.musicxml');
-  await storage.savePiece({
-    id: 'sample-ode-to-joy',
-    title: 'Ode to Joy',
-    composer: 'L. v. Beethoven (simple arrangement)',
-    content: await res.text(),
-    addedAt: Date.now(),
-    builtIn: true,
-  });
-  localStorage.setItem(flag, '1');
+// Built-in sample pieces (samples/index.json) are each added once, so they can
+// be deleted like any other piece and new samples still show up later.
+async function ensureSamples() {
+  const key = 'piano-trainer.samples-added';
+  const added = new Set(JSON.parse(localStorage.getItem(key) || '[]'));
+  if (localStorage.getItem('piano-trainer.sample-added')) added.add('sample-ode-to-joy'); // older versions
+
+  let index;
+  try {
+    index = await (await fetch('samples/index.json')).json();
+  } catch {
+    return; // offline: try again next time
+  }
+  // Listed easiest first; the library shows the newest first, so count down.
+  const now = Date.now();
+  for (const [i, sample] of index.entries()) {
+    if (added.has(sample.id)) continue;
+    const content = await (await fetch(`samples/${sample.file}`)).text();
+    await storage.savePiece({
+      id: sample.id,
+      title: sample.title,
+      composer: sample.composer,
+      content,
+      addedAt: now - i,
+      builtIn: true,
+    });
+    added.add(sample.id);
+  }
+  localStorage.setItem(key, JSON.stringify([...added]));
 }
 
 // ---- Practice -----------------------------------------------------------------
@@ -727,5 +742,5 @@ syncControls();
 score.setZoom(settings.zoom);
 midi.connect();
 storage.requestPersistence();
-await ensureSample();
+await ensureSamples();
 await showLibrary();

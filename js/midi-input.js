@@ -152,6 +152,9 @@ export class MidiInput {
       `inputs methods: ${methods.slice(0, 12).join(', ') || '(none)'}`,
       `listed: ${inputCount} input(s), ${outputs.length} output(s)${outputs.length ? ` [${outputs.map((o) => o.name).join(', ')}]` : ''}`,
       `checks: ${d.refreshes}, statechange events: ${d.stateChanges}, raw messages: ${d.rawMessages}${d.lastRaw ? ` (last: ${d.lastRaw})` : ''}`,
+      // Web MIDI Browser's add-on receives data through global _callback_* functions.
+      `add-on callbacks: ${Object.keys(window).filter((k) => k.startsWith('_callback_')).join(', ') || '(none)'}`,
+      `add-on callback errors: ${window.__midiCallbackErrors ?? 0}`,
     ].join('\n');
   }
 

@@ -19,7 +19,17 @@
         problems.push(text);
         render();
       };
-      window.addEventListener('error', (e) => show(`Error: ${e.message} (${(e.filename || '').split('/').pop()}:${e.lineno})`));
+      window.addEventListener('error', (e) => {
+        // Web MIDI Browser's add-on calls its own _callback_* functions from the
+        // app; messages arriving before it has set them up fail harmlessly.
+        // Counted for the connection dialog instead of shown here.
+        if (/_callback_/.test(e.message || '')) {
+          window.__midiCallbackErrors = (window.__midiCallbackErrors || 0) + 1;
+          e.preventDefault();
+          return;
+        }
+        show(`Error: ${e.message} (${(e.filename || '').split('/').pop()}:${e.lineno})`);
+      });
       window.addEventListener('unhandledrejection', (e) => show(`Error: ${e.reason?.message || e.reason}`));
       window.addEventListener('load', () => {
         if (location.protocol === 'file:') {

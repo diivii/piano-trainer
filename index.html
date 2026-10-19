@@ -26,8 +26,11 @@
           show('This page was opened as a file. Start it with start-server.cmd and open http://localhost:8000 instead.');
         } else if (!window.opensheetmusicdisplay) {
           show('The sheet music library (vendor/opensheetmusicdisplay.min.js) could not be loaded.');
-        } else if (!window.pianoTrainer) {
-          show('The app failed to start. Try a hard refresh (Ctrl+Shift+R).');
+        } else {
+          // Give slower devices a moment before concluding the app didn't start.
+          setTimeout(() => {
+            if (!window.pianoTrainer) show('The app failed to start. Try reloading the page.');
+          }, 3000);
         }
         render(); // errors from before the page was parsed
       });

@@ -18,6 +18,26 @@ export const SOURCE = {
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
+// The list of MIDI ports comes in different shapes: a Map-like object in
+// today's browsers, but Web MIDI polyfills (such as the one in the iOS "Web
+// MIDI Browser" app) may give a Map without values(), a plain object, an
+// array, or (old spec) a function returning an array.
+export function listPorts(ports) {
+  if (!ports) return [];
+  if (typeof ports === 'function') return Array.from(ports() ?? []);
+  if (Array.isArray(ports)) return ports;
+  if (typeof ports.values === 'function') return Array.from(ports.values());
+  if (typeof ports.forEach === 'function') {
+    const list = [];
+    ports.forEach((port) => list.push(port));
+    return list;
+  }
+  if (typeof ports.size === 'number' && typeof ports.get === 'function' && typeof ports.keys === 'function') {
+    return Array.from(ports.keys(), (key) => ports.get(key));
+  }
+  return Object.values(ports).filter((port) => port && typeof port === 'object');
+}
+
 export function noteName(note) {
   return NOTE_NAMES[note % 12] + (Math.floor(note / 12) - 1);
 }
@@ -60,8 +80,15 @@ export class MidiInput {
   }
 
   refreshInputs() {
+    let inputs;
+    try {
+      inputs = listPorts(this.access.inputs);
+    } catch (err) {
+      this.setStatus({ state: 'denied', error: `Could not list MIDI devices: ${err.message || err}` });
+      return;
+    }
     const devices = [];
-    for (const input of this.access.inputs.values()) {
+    for (const input of inputs) {
       input.onmidimessage = (msg) => this.handleMessage(msg, input);
       devices.push({ id: input.id, name: input.name, manufacturer: input.manufacturer, state: input.state });
     }

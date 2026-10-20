@@ -15,7 +15,9 @@ Live: https://diivii.github.io/piano-trainer/
   more in tempo mode, fewer from the 3rd run of a piece on the same day). The
   level and a progress bar sit in the header; the results card fills the bar and
   plays a little jingle on a new level
-- **Difficulty**: the library is sorted into Leicht / Mittel / Schwer. Each piece
+- **Difficulty**: the library shows three columns, Leicht / Mittel / Schwer;
+  in each, pieces not played for the longest time come first, so just
+  practiced ones move to the bottom (per person). Each piece
   is rated automatically from its notes (speed, chords, both hands, hand range,
   black keys, length); tap the label on a card to change it
 - **17 built-in pieces** from easy to hard: children's songs (Alle meine Entchen,

@@ -32,13 +32,21 @@ export function renderLibrary(container, items, { onOpen, onDelete, onDifficulty
     return;
   }
 
-  const groups = [...DIFFICULTIES.map((d) => [d, DIFFICULTY_LABEL[d]]), [undefined, 'Wird eingestuft …']];
+  // One column per difficulty (always all three, so they stay in place), plus
+  // a full-width row for pieces still being rated. In each column, pieces not
+  // played for the longest time come first: just practiced ones move to the
+  // bottom, so the others get their turn.
+  const groups = [[undefined, 'Wird eingestuft …'], ...DIFFICULTIES.map((d) => [d, DIFFICULTY_LABEL[d]])];
+  const lastPlayed = (item) => item.stats?.lastPracticed ?? 0;
   container.replaceChildren(...groups.flatMap(([difficulty, label]) => {
-    const group = items.filter((i) => i.piece.difficulty === difficulty);
-    if (!group.length) return [];
+    const group = items
+      .filter((i) => i.piece.difficulty === difficulty)
+      .sort((a, b) => lastPlayed(a) - lastPlayed(b)); // stable: unplayed keep their order
+    if (!group.length && !difficulty) return [];
     const section = el('section', `library-section ${difficulty ?? 'unrated'}`);
     section.append(el('h3', 'library-section-title', label), el('div', 'library-cards'));
     section.lastChild.append(...group.map((item) => card(item, { onOpen, onDelete, onDifficulty })));
+    if (!group.length) section.lastChild.append(el('p', 'hint', 'Noch keine Stücke.'));
     return [section];
   }));
 }

@@ -84,6 +84,9 @@ All built on 2026-10-19:
 - Done (2026-10-20): settings dialog (⚙ in the library) with "Fortschritt
   zurücksetzen" for the active profile (`storage.deleteRuns`). Deliberately hard
   to reach: collapsed section plus two taps. Put other rarely used options there.
+- Library layout (2026-10-20): three columns by difficulty; within a column
+  sorted by the active profile's last practice (never played first), to nudge
+  towards other pieces.
 - No known TODOs in the code.
 
 ## Ideas / next steps

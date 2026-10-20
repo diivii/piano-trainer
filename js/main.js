@@ -916,7 +916,7 @@ simulator.onOctaveChange(simulator.baseNote);
 $('midi-pill').addEventListener('click', () => $('midi-dialog').showModal());
 
 // ---- Profiles ----
-// Tapping the profile button switches to the next child: their settings and
+// Tapping the profile button switches to the next person: their settings and
 // practice history are loaded, the shared pieces stay.
 
 function renderProfile() {

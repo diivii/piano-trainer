@@ -10,7 +10,7 @@ Live: https://diivii.github.io/piano-trainer/
 
 - **Profiles** for Emil 🦖 and Julia 🦄: tap the button at the top of the library
   to switch. Each has a color theme (green / purple) so it's clear whose turn it is.
-  Pieces are shared; practice history, stats and settings are per child
+  Pieces are shared; practice history, stats and settings are per person
 - **Levels**: every finished run earns points (notes played × accuracy², ×1.5 or
   more in tempo mode, fewer from the 3rd run of a piece on the same day). The
   level and a progress bar sit in the header; the results card fills the bar and

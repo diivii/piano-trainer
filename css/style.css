@@ -15,7 +15,7 @@
   --tap: 44px; /* minimum touch target */
 }
 
-/* Profile themes: a tint of the child's color on everything, so it's obvious
+/* Profile themes: a tint of the person's color on everything, so it's obvious
    at a glance whose profile is active. Set via body[data-profile] in main.js. */
 body[data-profile="emil"] {
   --bg: #121915;

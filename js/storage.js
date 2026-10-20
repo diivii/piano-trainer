@@ -86,6 +86,14 @@ export const listRuns = (pieceId, profile = currentProfile().id) =>
     ? s.index('profilePiece').getAll([profile, pieceId])
     : s.index('pieceId').getAll(pieceId)));
 
+// Deletes all practice runs of a profile (points, level, stars and stats
+// start over). Pieces, settings and other profiles stay.
+export async function deleteRuns(profile = currentProfile().id) {
+  const runs = (await listAllRuns()).filter((r) => r.profile === profile);
+  await tx('runs', 'readwrite', (s) => runs.forEach((r) => s.delete(r.id)));
+  return runs.length;
+}
+
 // All points the profile has earned (its level comes from this, see levels.js).
 export async function totalPoints(profile = currentProfile().id) {
   const runs = await listAllRuns();

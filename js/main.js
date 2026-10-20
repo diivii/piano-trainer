@@ -311,6 +311,42 @@ function backupStatus(text) {
   $('backup-status').hidden = false;
 }
 
+// ---- Settings: reset a profile's progress ----
+// Behind a gear button and a collapsed section, and two taps, so it isn't hit by accident.
+
+function resetLabel() {
+  $('reset-progress').classList.remove('confirm');
+  $('reset-progress').textContent = `Fortschritt von ${storage.currentProfile().name} löschen`;
+}
+
+$('settings-open').addEventListener('click', () => {
+  $('settings-dialog').querySelector('[data-reset-name]').textContent = storage.currentProfile().name;
+  $('settings-dialog').querySelector('details').open = false;
+  $('reset-status').hidden = true;
+  resetLabel();
+  $('settings-dialog').showModal();
+});
+$('settings-close').addEventListener('click', () => $('settings-dialog').close());
+
+let resetTimer = null;
+$('reset-progress').addEventListener('click', async () => {
+  const button = $('reset-progress');
+  if (!button.classList.contains('confirm')) {
+    button.classList.add('confirm');
+    button.textContent = 'Wirklich löschen? Nochmal tippen';
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(resetLabel, 4000);
+    return;
+  }
+  clearTimeout(resetTimer);
+  const name = storage.currentProfile().name;
+  const count = await storage.deleteRuns();
+  resetLabel();
+  $('reset-status').textContent = `${count} Übungsdurchgänge von ${name} gelöscht.`;
+  $('reset-status').hidden = false;
+  showLibrary();
+});
+
 function openBackupDialog() {
   const last = lastBackup();
   $('backup-last').textContent = last ? formatDate(last) : 'nie';

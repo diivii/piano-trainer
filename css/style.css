@@ -248,6 +248,10 @@ kbd {
 .piece-card .stars.s0 { color: var(--muted); opacity: 0.6; }
 .results-stars { color: var(--warn); font-size: 1.8rem; letter-spacing: 4px; line-height: 1; }
 .results-stars small { display: block; font-size: 0.85rem; letter-spacing: 0; color: var(--ok); font-weight: 600; margin-top: 0.2rem; }
+.button.danger { background: transparent; border-color: var(--err); color: var(--err); }
+.button.danger.confirm { background: var(--err); color: #fff; }
+.danger-zone summary { cursor: pointer; color: var(--muted); padding: 0.3rem 0; }
+.danger-zone[open] { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; }
 .level-dialog { width: min(420px, 92vw); overflow: hidden; } /* no scrollbar while the title pops */
 .level-dialog .debug { text-align: center; align-items: center; padding: 1.4rem; }
 .piece-card .delete {

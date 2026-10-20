@@ -81,6 +81,9 @@ All built on 2026-10-19:
   orange (`keyboard-view.js` `setExpected(notes, left)`).
 - Decided against for now: offline mode (service workers probably unavailable in
   MIDIWeb Browser's WKWebView).
+- Done (2026-10-20): settings dialog (⚙ in the library) with "Fortschritt
+  zurücksetzen" for the active profile (`storage.deleteRuns`). Deliberately hard
+  to reach: collapsed section plus two taps. Put other rarely used options there.
 - No known TODOs in the code.
 
 ## Ideas / next steps

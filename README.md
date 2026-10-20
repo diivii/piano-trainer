@@ -26,6 +26,8 @@ Live: https://diivii.github.io/piano-trainer/
 - **Hand colors**: key hints are green for the right hand, orange for the left;
   a hint fades out once played and lights up again for a repeated note
 - On a new level the app offers to save a backup (also after a looped section)
+- **Settings** (⚙ in the library): reset the selected person's progress
+  (behind a collapsed section and a second tap)
 - **Library**: imported pieces are stored on the device, with last practiced,
   number of runs, best accuracy and the bars with the most mistakes
 - **Sheet music** from MusicXML (`.musicxml`, `.xml`, `.mxl`), rendered with

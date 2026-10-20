@@ -20,6 +20,7 @@
     <div class="library-head">
       <h2>Deine Stücke</h2>
       <div class="library-actions">
+        <button id="settings-open" class="button icon-button" type="button" aria-label="Einstellungen" title="Einstellungen">⚙</button>
         <button id="backup-open" class="button" type="button">Sicherung</button>
         <label class="button primary">
           + Stück importieren
@@ -161,6 +162,26 @@
         <button id="level-backup" class="button primary" type="button">Sicherung speichern</button>
         <button id="level-close" class="button" type="button">Weiter</button>
       </div>
+    </div>
+  </dialog>
+
+  <!-- ===== Settings (rarely needed things, kept out of the way) ===== -->
+  <dialog id="settings-dialog" class="midi-dialog">
+    <div class="debug">
+      <div class="debug-head">
+        <h2>Einstellungen</h2>
+        <button id="settings-close" class="icon-button" type="button" aria-label="Schließen">✕</button>
+      </div>
+      <details class="danger-zone">
+        <summary>Fortschritt zurücksetzen</summary>
+        <p class="hint">
+          Löscht alle Übungsdurchgänge von <b data-reset-name></b>: Punkte, Level, Sterne und Statistik
+          beginnen wieder bei null. Stücke, Einstellungen und der Fortschritt der anderen bleiben erhalten.
+          Wechsle vorher oben rechts zur richtigen Person. Speichere zur Sicherheit erst eine Sicherung.
+        </p>
+        <button id="reset-progress" class="button danger" type="button"></button>
+        <p id="reset-status" class="hint" hidden></p>
+      </details>
     </div>
   </dialog>
 

@@ -92,7 +92,7 @@ export class KeyboardView {
 
     this.container.replaceChildren(board);
     for (const [note, state] of this.states) this.applyState(note, state);
-    this.setExpected(this.expected);
+    this.setExpected(this.expected, this.expectedLeft);
     this.setPlaying(this.playing ?? []);
     if (this.simBase !== null) this.setOctaveMarker(this.simBase);
   }
@@ -153,13 +153,16 @@ export class KeyboardView {
 
   // Notes the score expects next (shown as hints). New hints fade in, also
   // when the same key was needed (and played) in the step before.
-  setExpected(notes) {
+  // left: the notes among them for the left hand (shown in another color).
+  setExpected(notes, left = new Set()) {
     this.expected = new Set(notes);
+    this.expectedLeft = new Set(left);
     for (const [note, key] of this.keys) {
       const wanted = this.expected.has(note);
       const fresh = wanted && (!key.classList.contains('expected') || key.classList.contains('hit'));
       key.classList.remove('hit');
       key.classList.toggle('expected', wanted);
+      key.classList.toggle('left', wanted && this.expectedLeft.has(note));
       if (fresh) this.relight(key);
     }
   }

@@ -19,6 +19,15 @@ export function repeatFactor(runsToday) {
   return runsToday < 2 ? 1 : Math.max(0.25, 0.75 ** (runsToday - 1));
 }
 
+// Stars for a piece, from the best accuracy of a whole-piece run with both
+// hands: 1 from 70%, 2 from 85%, 3 from 95%.
+export function stars(accuracy) {
+  if (accuracy === null || accuracy === undefined) return 0;
+  return accuracy >= 0.95 ? 3 : accuracy >= 0.85 ? 2 : accuracy >= 0.7 ? 1 : 0;
+}
+
+export const starText = (count) => '★'.repeat(count) + '☆'.repeat(3 - count);
+
 // Points needed to go from `level` to the next one: 100, 150, 200, …
 export const pointsForLevel = (level) => 50 + 50 * level;
 

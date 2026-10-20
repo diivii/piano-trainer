@@ -67,13 +67,20 @@ All built on 2026-10-19:
 - Done (2026-10-20): levels. Points per run are stored on the run (`points`), the
   level is computed from the profile's total (`levels.js`). Level-up shows on the
   results card with a jingle (`Player.playJingle`, piano or device like "Anhören").
-  Looping runs ended by leaving the piece also earn points, but have no results
-  card, so a level-up there only shows in the header.
+  Looping runs ended by leaving the piece also earn points; a level-up there
+  shows the level dialog (`#level-dialog`). A level-up always offers
+  "Sicherung speichern" (iOS only saves files from a tap, so no silent autosave).
+  `recordRun` must read `pieceRecord`/`piece` before its first `await`: leaving
+  the piece clears them while it still runs (this once lost all looped runs).
 - Done (2026-10-20): difficulty sections in the library. Pieces store `difficulty`
   ('easy' | 'medium' | 'hard'), estimated by `difficulty.js` in the background
   (hidden ScoreView) for any piece without one; `difficultyManual: true` when set
   by tapping the card's label. The samples come out 6 easy / 8 medium / 3 hard
   (Für Elise, Bach Präludium, Bergkönig).
+- Done (2026-10-20): stars per piece (`levels.js` `stars()`), left-hand hints in
+  orange (`keyboard-view.js` `setExpected(notes, left)`).
+- Decided against for now: offline mode (service workers probably unavailable in
+  MIDIWeb Browser's WKWebView).
 - No known TODOs in the code.
 
 ## Ideas / next steps

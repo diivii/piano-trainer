@@ -1,7 +1,7 @@
 import { MidiInput, KeyboardSimulator, noteName } from './midi-input.js';
 import { KeyboardView } from './keyboard-view.js';
 import { DebugPanel } from './debug-panel.js';
-import { ScoreView, NOTE_COLOR } from './score-view.js';
+import { ScoreView, NOTE_COLOR, STAFF } from './score-view.js';
 import { PracticeSession } from './practice.js';
 import { TempoSession, JUDGEMENT } from './tempo-practice.js';
 import { Metronome } from './metronome.js';
@@ -9,7 +9,7 @@ import { Player, outputStats } from './player.js';
 import { renderLibrary } from './library-view.js';
 import { saveBackup, restoreBackup, lastBackup } from './backup.js';
 import * as storage from './storage.js';
-import { runPoints, repeatFactor, levelInfo } from './levels.js';
+import { runPoints, repeatFactor, levelInfo, stars, starText } from './levels.js';
 import { DIFFICULTIES, estimateDifficulty } from './difficulty.js';
 
 const $ = (id) => document.getElementById(id);
@@ -311,15 +311,18 @@ function backupStatus(text) {
   $('backup-status').hidden = false;
 }
 
-$('backup-open').addEventListener('click', () => {
+function openBackupDialog() {
   const last = lastBackup();
   $('backup-last').textContent = last ? formatDate(last) : 'nie';
   $('backup-status').hidden = true;
   $('backup-dialog').showModal();
-});
+}
+$('backup-open').addEventListener('click', openBackupDialog);
 $('backup-close').addEventListener('click', () => $('backup-dialog').close());
 
-$('backup-export').addEventListener('click', async () => {
+$('backup-export').addEventListener('click', () => exportBackup());
+
+async function exportBackup() {
   try {
     const result = await saveBackup();
     if (!result) return;
@@ -330,11 +333,11 @@ $('backup-export').addEventListener('click', async () => {
       copied: `Dateien speichern geht hier nicht, daher wurde die Sicherung (mit ${what}) in die Zwischenablage kopiert. Füge sie in eine Notiz ein, um sie aufzubewahren; „Aus Zwischenablage wiederherstellen“ liest sie wieder ein.`,
     }[result.how]);
     $('backup-last').textContent = formatDate(Date.now());
-    showLibrary();
+    if (!$('library-view').hidden) showLibrary(); // updates the backup reminder
   } catch (err) {
     backupStatus(`Sicherung fehlgeschlagen: ${err.message || err}`);
   }
-});
+}
 
 async function restore(source) {
   try {
@@ -496,6 +499,7 @@ async function ensureSamples() {
 
 let session = null;
 let expected = new Set(); // notes the score wants next
+let expectedLeft = new Set(); // ...of those, the left hand's (hinted in another color)
 const stepMistakes = new Set(); // wait mode: steps where a wrong note was played
 let timers = [];
 
@@ -517,7 +521,8 @@ function endSession() {
   if (!session) return;
   session.stop();
   // Looping sessions never "finish"; keep their result when leaving.
-  if (!session.finished && session.summary().laps > 0) recordRun(session.summary());
+  // A level reached that way gets its celebration in a dialog.
+  if (!session.finished && session.summary().laps > 0) recordRun(session.summary()).then(celebrateLevelUp);
   session = null;
   timers.forEach(clearTimeout);
   timers = [];
@@ -539,6 +544,8 @@ function startSession() {
     onStep: (step, required) => {
       score.moveTo(step.index);
       expected = required;
+      const right = new Set(step.notes.filter((n) => n.staff !== STAFF.LEFT).map((n) => n.midi));
+      expectedLeft = new Set(step.notes.filter((n) => n.staff === STAFF.LEFT && !right.has(n.midi)).map((n) => n.midi));
       updateHints();
       renderStats();
     },
@@ -584,8 +591,9 @@ function startSession() {
       renderStats();
       const options = session.options;
       const previousBest = await bestAccuracy(options, summary.mode);
+      const starsBefore = stars((await storage.pieceStats(pieceRecord.id))?.bestAccuracy);
       const earned = await recordRun(summary);
-      showResults(summary, options, previousBest, earned);
+      showResults(summary, options, previousBest, earned, starsBefore);
     },
   };
 
@@ -668,27 +676,30 @@ for (const id of ['listen', 'focus-listen']) {
 }
 
 function updateHints() {
-  keyboard.setExpected(settings.hints ? expected : new Set());
+  keyboard.setExpected(settings.hints ? expected : new Set(), expectedLeft);
 }
 
 // Saves the run with its points. Returns { points, factor, before, after }
 // (total points before and after) for the results card.
 async function recordRun(summary) {
   if (!pieceRecord || !session || summary.correct + summary.wrong + (summary.missed ?? 0) === 0) return null;
+  // Taken now: when leaving the piece, these are cleared while this still runs.
   const o = session.options;
+  const pieceId = pieceRecord.id;
+  const pieceTempo = piece?.tempo;
   const today = new Date().setHours(0, 0, 0, 0);
-  const runsToday = (await storage.listRuns(pieceRecord.id)).filter((r) => r.date >= today).length;
+  const runsToday = (await storage.listRuns(pieceId)).filter((r) => r.date >= today).length;
   const points = runPoints({
     notes: summary.correct + (summary.missed ?? 0), // every note of the run (all laps)
     accuracy: summary.accuracy,
     mode: summary.mode,
     tempo: o.tempo,
-    pieceTempo: piece?.tempo,
+    pieceTempo,
     runsToday,
   });
   const before = await storage.totalPoints();
   await storage.saveRun({
-    pieceId: pieceRecord.id,
+    pieceId,
     date: Date.now(),
     mode: summary.mode,
     hands: o.hands,
@@ -719,7 +730,7 @@ async function bestAccuracy(options, mode) {
 
 // ---- Results card ----
 
-function showResults(summary, options, previousBest, earned) {
+function showResults(summary, options, previousBest, earned, starsBefore = 0) {
   const el = (tag, className, text) => {
     const node = document.createElement(tag);
     if (className) node.className = className;
@@ -746,6 +757,14 @@ function showResults(summary, options, previousBest, earned) {
   const big = el('div', 'results-big', pct(summary.accuracy));
   big.append(el('small', '', ' richtig'));
   card.append(big);
+
+  // Stars count for the whole piece with both hands (see levels.js).
+  if (options.fullPiece && options.hands === 'both') {
+    const count = stars(summary.accuracy);
+    const row = el('div', 'results-stars', starText(count));
+    if (count > starsBefore) row.append(el('small', '', count - starsBefore === 1 ? 'Neuer Stern!' : 'Neue Sterne!'));
+    card.append(row);
+  }
 
   let compare;
   if (previousBest === null) compare = ['', 'Erster Durchgang mit diesen Einstellungen'];
@@ -837,11 +856,43 @@ function levelProgress({ points, factor, before, after }) {
       up.className = 'level-up';
       up.textContent = `Level ${end.level}! 🎉`;
       box.prepend(up);
+      box.append(backupButton());
       playJingle();
     });
   }
   return box;
 }
+
+// After a new level: one tap saves a backup (iOS only allows saving files
+// from a tap, so this can't happen automatically).
+function backupButton() {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'button';
+  button.textContent = 'Sicherung speichern';
+  button.addEventListener('click', () => {
+    openBackupDialog();
+    exportBackup();
+  });
+  return button;
+}
+
+// For runs without a results card (a looped section left with "Bibliothek").
+function celebrateLevelUp(earned) {
+  if (!earned) return;
+  const end = levelInfo(earned.after);
+  if (end.level === levelInfo(earned.before).level) return;
+  $('level-dialog-title').textContent = `Level ${end.level}! 🎉`;
+  $('level-dialog-text').textContent = `+${earned.points} Punkte. Speichere jetzt eine Sicherung, damit dein Fortschritt nicht verloren geht.`;
+  $('level-dialog').showModal();
+  playJingle();
+}
+$('level-close').addEventListener('click', () => $('level-dialog').close());
+$('level-backup').addEventListener('click', () => {
+  $('level-dialog').close();
+  openBackupDialog();
+  exportBackup();
+});
 
 function playJingle() {
   const output = settings.sound === 'piano' ? midi.pianoOutput() : null;

@@ -2,6 +2,7 @@
 // in sections by difficulty (easy first).
 
 import { DIFFICULTIES, DIFFICULTY_LABEL } from './difficulty.js';
+import { stars, starText } from './levels.js';
 
 function relativeDay(timestamp) {
   const days = Math.floor((startOfDay(Date.now()) - startOfDay(timestamp)) / 86400000);
@@ -50,6 +51,10 @@ function card({ piece, stats }, { onOpen, onDelete, onDifficulty }) {
 
   node.append(el('h3', '', piece.title));
   if (piece.composer) node.append(el('div', 'composer', piece.composer));
+  const count = stars(stats?.bestAccuracy);
+  const starsEl = el('div', `stars s${count}`, starText(count));
+  starsEl.title = 'Sterne fürs ganze Stück mit beiden Händen: ab 70 %, 85 % und 95 %';
+  node.append(starsEl);
 
   if (stats?.troubleMeasures.length) {
     node.append(el('div', 'trouble', `Üben: Takt ${stats.troubleMeasures.join(', ')}`));

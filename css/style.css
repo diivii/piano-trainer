@@ -244,6 +244,12 @@ kbd {
 .piece-card .meta { margin-top: auto; display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; font-size: 0.85rem; color: var(--muted); }
 .piece-card .meta b { color: var(--text); font-weight: 600; }
 .piece-card .trouble { color: var(--warn); font-size: 0.85rem; }
+.piece-card .stars { color: var(--warn); font-size: 1.05rem; letter-spacing: 2px; }
+.piece-card .stars.s0 { color: var(--muted); opacity: 0.6; }
+.results-stars { color: var(--warn); font-size: 1.8rem; letter-spacing: 4px; line-height: 1; }
+.results-stars small { display: block; font-size: 0.85rem; letter-spacing: 0; color: var(--ok); font-weight: 600; margin-top: 0.2rem; }
+.level-dialog { width: min(420px, 92vw); overflow: hidden; } /* no scrollbar while the title pops */
+.level-dialog .debug { text-align: center; align-items: center; padding: 1.4rem; }
 .piece-card .delete {
   position: absolute;
   top: 0.4rem;
@@ -364,6 +370,9 @@ body.focus .focus-controls { display: flex; }
 .key.white.sim-range { background: #e9eef5; }
 .key.white.expected { background: #b9f0cf; }
 .key.black.expected { background: #2f8f57; }
+/* Left-hand hints in orange, right hand green. */
+.key.white.expected.left { background: #ffcf9e; }
+.key.black.expected.left { background: #c8711f; }
 /* Played hint keys fade out; new or repeated hints fade in (keyboard-view.js). */
 .key.white.expected.hit { background: #f4f4f2; transition: background-color 0.35s ease-out; }
 .key.black.expected.hit { background: #1a1a1a; transition: background-color 0.35s ease-out; }

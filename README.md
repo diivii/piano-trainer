@@ -21,6 +21,11 @@ Live: https://diivii.github.io/piano-trainer/
 - **17 built-in pieces** from easy to hard: children's songs (Alle meine Entchen,
   Hänschen klein, …), Stille Nacht, When the Saints, Kanon in D, Gymnopédie,
   Für Elise, Bach's Präludium in C and more (all public domain)
+- **Stars** per piece (1–3) for the best whole-piece run with both hands
+  (from 70 %, 85 %, 95 %), on the cards and the results card
+- **Hand colors**: key hints are green for the right hand, orange for the left;
+  a hint fades out once played and lights up again for a repeated note
+- On a new level the app offers to save a backup (also after a looped section)
 - **Library**: imported pieces are stored on the device, with last practiced,
   number of runs, best accuracy and the bars with the most mistakes
 - **Sheet music** from MusicXML (`.musicxml`, `.xml`, `.mxl`), rendered with

@@ -236,8 +236,35 @@ document.addEventListener('click', (e) => e.target.closest('button')?.blur());
 let pieceRecord = null; // stored piece { id, title, content, ... }
 let piece = null; // loaded score { title, measureCount, tempo, measures, steps }
 
+// Keep the screen from dimming while a piece is open (Screen Wake Lock API;
+// silently does nothing where it isn't supported). The browser drops the lock
+// when the app goes to the background, so it's requested again on return.
+let wakeLock = null;
+let wantAwake = false;
+
+async function keepAwake(on) {
+  wantAwake = on;
+  if (!on) {
+    wakeLock?.release?.().catch?.(() => {});
+    wakeLock = null;
+    return;
+  }
+  if (wakeLock || document.visibilityState !== 'visible') return;
+  try {
+    wakeLock = await navigator.wakeLock?.request('screen');
+    wakeLock?.addEventListener?.('release', () => (wakeLock = null));
+  } catch {
+    wakeLock = null;
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (wantAwake && document.visibilityState === 'visible') keepAwake(true);
+});
+
 async function showLibrary() {
   endSession();
+  keepAwake(false);
   renderLevel();
   document.body.classList.remove('focus');
   $('practice-view').hidden = true;
@@ -365,6 +392,7 @@ function rateNewPieces(pieces) {
 }
 
 async function openRecord(record) {
+  keepAwake(true);
   // The score must be visible while rendering, or it gets laid out at zero width.
   $('library-view').hidden = true;
   $('practice-view').hidden = false;

@@ -172,10 +172,12 @@ export class MidiInput {
   }
 
   // The MIDI output to play through the piano: prefer a real instrument over
-  // network sessions ("Session 1" on iOS).
+  // virtual ports such as iOS network sessions ("Session 1", "Netzwerk Session 1")
+  // or the browser's own port ("MIDIWeb Out").
   pianoOutput() {
     const outputs = this.outputs ?? [];
-    return outputs.find((o) => !/^session\b/i.test(o.name ?? '')) ?? outputs[0] ?? null;
+    const virtual = /session|netzwerk|network|midiweb|\biac\b/i;
+    return outputs.find((o) => !virtual.test(o.name ?? '')) ?? outputs[0] ?? null;
   }
 
   listen(port) {

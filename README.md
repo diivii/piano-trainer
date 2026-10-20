@@ -8,6 +8,9 @@ Live: https://diivii.github.io/piano-trainer/
 
 ## Features
 
+- **Profiles** for Emil 🦖 and Julia 🦄: tap the button at the top of the library
+  to switch. Each has a color theme (green / purple) so it's clear whose turn it is.
+  Pieces are shared; practice history, stats and settings are per child
 - **Library**: imported pieces are stored on the device, with last practiced,
   number of runs, best accuracy and the bars with the most mistakes
 - **Sheet music** from MusicXML (`.musicxml`, `.xml`, `.mxl`), rendered with
@@ -75,7 +78,7 @@ Locally there's no `version.json` and files load unversioned ("lokal").
 | `js/tempo-practice.js` | Tempo-mode logic and timing judgement |
 | `js/metronome.js` | Metronome clicks via Web Audio |
 | `js/player.js` | Plays a piece back (MIDI out to the piano, or a Web Audio synth) |
-| `js/storage.js` | IndexedDB (pieces, runs), settings, backup import/export |
+| `js/storage.js` | Profiles, IndexedDB (pieces, runs), settings, backup import/export |
 | `js/backup.js` | Saving/restoring backup files (share sheet, download or clipboard) |
 | `js/library-view.js` | Library cards |
 | `js/keyboard-view.js` | On-screen 88-key piano |

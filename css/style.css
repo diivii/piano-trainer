@@ -15,6 +15,25 @@
   --tap: 44px; /* minimum touch target */
 }
 
+/* Profile themes: a tint of the child's color on everything, so it's obvious
+   at a glance whose profile is active. Set via body[data-profile] in main.js. */
+body[data-profile="emil"] {
+  --bg: #121915;
+  --panel: #19241d;
+  --panel-2: #213027;
+  --border: #2f4537;
+  --accent: #3fbf6f;
+  --accent-text: #0b1f12;
+}
+body[data-profile="julia"] {
+  --bg: #18131c;
+  --panel: #221a28;
+  --panel-2: #2d2334;
+  --border: #433450;
+  --accent: #c06be0;
+  --accent-text: #1e0d26;
+}
+
 * { box-sizing: border-box; }
 
 html, body { height: 100%; }
@@ -108,7 +127,22 @@ kbd {
   border-bottom: 1px solid var(--border);
 }
 .now-playing { color: var(--muted); font-variant-numeric: tabular-nums; }
-.midi-pill { margin-left: auto; border-radius: 999px; font-size: 0.85rem; }
+.profile-button {
+  margin-left: auto;
+  border-radius: 999px;
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  font-weight: 600;
+  gap: 0.4rem;
+}
+.profile-button .profile-icon { font-size: 1.4rem; line-height: 1; }
+.profile-button:disabled { opacity: 1; cursor: default; }
+.profile-button.bump .profile-icon { animation: profile-bump 0.4s ease-out; }
+@keyframes profile-bump {
+  40% { transform: scale(1.4) rotate(-12deg); }
+  100% { transform: none; }
+}
+.midi-pill { border-radius: 999px; font-size: 0.85rem; }
 .midi-pill .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
 .midi-pill[data-state="on"] .dot { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
 .midi-pill[data-state="error"] .dot { background: var(--err); }
@@ -227,7 +261,7 @@ kbd {
 .feedback.on-time { background: var(--ok); }
 .feedback.early, .feedback.late { background: var(--warn); color: #222; }
 .feedback.missed, .feedback.wrong { background: var(--err); }
-.feedback.count { background: var(--accent); font-size: 2.2rem; top: 40%; transform: translate(-50%, -50%); padding: 0.4rem 1.4rem; }
+.feedback.count { background: var(--accent); color: var(--accent-text); font-size: 2.2rem; top: 40%; transform: translate(-50%, -50%); padding: 0.4rem 1.4rem; }
 
 .focus-controls { display: none; position: absolute; top: 0.5rem; right: 0.5rem; gap: 0.4rem; }
 
@@ -272,7 +306,7 @@ body.focus .focus-controls { display: flex; }
 .key.white.sim-range { background: #e9eef5; }
 .key.white.expected { background: #b9f0cf; }
 .key.black.expected { background: #2f8f57; }
-.key.down { background: var(--accent) !important; }
+.key.down { background: #4fa3ff !important; } /* not themed: green would look like a key hint */
 .key.sustained { background: var(--sustain) !important; }
 .key.wrong { background: var(--err) !important; }
 
@@ -385,8 +419,8 @@ body.focus .focus-controls { display: flex; }
 .bar-layer { position: absolute; left: 0; top: 0; pointer-events: none; }
 .bar-mark {
   position: absolute;
-  background: rgba(79, 163, 255, 0.12);
-  border: 2px solid rgba(79, 163, 255, 0.55);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
   border-radius: 4px;
 }
 .bar-layer.pending .bar-mark { border-style: dashed; }

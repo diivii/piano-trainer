@@ -240,6 +240,7 @@ async function showLibrary() {
   $('practice-view').hidden = true;
   $('library-view').hidden = false;
   $('back').hidden = true;
+  $('profile').disabled = false;
   $('app-title').textContent = 'Klaviertrainer';
   pieceRecord = null;
   piece = null;
@@ -327,6 +328,7 @@ async function openRecord(record) {
   $('library-view').hidden = true;
   $('practice-view').hidden = false;
   $('back').hidden = false;
+  $('profile').disabled = true; // switch only in the library, so a run can't change owner
   $('app-title').textContent = record.title || 'Wird geladen…';
   hideMessage();
 
@@ -779,6 +781,35 @@ const simulator = new KeyboardSimulator(midi, {
 simulator.onOctaveChange(simulator.baseNote);
 
 $('midi-pill').addEventListener('click', () => $('midi-dialog').showModal());
+
+// ---- Profiles ----
+// Tapping the profile button switches to the next child: their settings and
+// practice history are loaded, the shared pieces stay.
+
+function renderProfile() {
+  const profile = storage.currentProfile();
+  const button = $('profile');
+  button.querySelector('[data-profile-icon]').textContent = profile.icon;
+  button.querySelector('[data-profile-name]').textContent = profile.name;
+  document.body.dataset.profile = profile.id;
+  const next = storage.PROFILES[(storage.PROFILES.indexOf(profile) + 1) % storage.PROFILES.length];
+  button.title = `Wechseln zu ${next.name}`;
+  button.setAttribute('aria-label', `${profile.name} übt. Tippen, um zu ${next.name} zu wechseln.`);
+  return next;
+}
+
+$('profile').addEventListener('click', async () => {
+  storage.setProfile(renderProfile().id);
+  Object.assign(settings, storage.loadSettings());
+  renderProfile();
+  syncControls();
+  score.setZoom(settings.zoom);
+  const button = $('profile');
+  button.classList.remove('bump');
+  void button.offsetWidth; // restart the animation
+  button.classList.add('bump');
+  await showLibrary();
+});
 setInterval(() => {
   if (!$('midi-dialog').open) return;
   $('midi-diagnostics').textContent = `App-Version: ${window.appVersion ?? '?'}\n${midi.status.diagnostics ?? 'Noch kein MIDI-Zugriff.'}`;
@@ -795,6 +826,7 @@ window.pianoTrainer = {
   get session() { return session; },
 };
 
+renderProfile();
 syncControls();
 score.setZoom(settings.zoom);
 midi.connect();

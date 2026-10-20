@@ -24,6 +24,12 @@ the project and where it stands.
 - `js/midi-input.js` is the only module that touches Web MIDI. Everything else gets
   normalized note events, so a native app later would only replace that file.
 - Practice logic (`practice.js`, `tempo-practice.js`) has no display code; keep it that way.
+- Profiles (Emil, Julia) are a fixed list in `storage.js`. Pieces are shared; every
+  run has a `profile` field and settings are stored per profile. Anything new that
+  counts as progress must be per profile too. Each profile has a color theme
+  (`body[data-profile=…]` in `style.css`, overriding the color variables); use
+  `var(--accent)` etc. for new UI instead of fixed colors. Exceptions on purpose:
+  pressed keys stay blue and note feedback stays green/orange/red.
 - Data lives in the browser's IndexedDB on the device (`storage.js`). Keep the backup
   format (`backup.js`) backwards compatible so old backups can still be restored.
 - **Pushing to `main` publishes the live site** via GitHub Actions
@@ -44,6 +50,10 @@ All built on 2026-10-19:
   needed workarounds for that app's Web MIDI polyfill in `midi-input.js`: old-style
   iterators, continuous device polling, ignoring the add-on's callback errors.
   Keep them when changing MIDI code.
+- Done (2026-10-20): profiles for Emil 🦖 (green theme) and Julia 🦄 (purple theme)
+  with a switch button in the header (locked while a piece is open). The DB upgrade to version 2 dropped all
+  runs recorded before profiles existed (agreed with the user); runs in old
+  version 1 backups are skipped on restore, their pieces still come back.
 - No known TODOs in the code.
 
 ## Ideas / next steps

@@ -543,6 +543,7 @@ function startSession() {
       renderStats();
     },
     onCorrect: (note, step) => {
+      keyboard.markHit(note);
       score.colorNote(step.index, note, stepMistakes.has(step.index) ? NOTE_COLOR.OK : NOTE_COLOR.GOOD);
     },
     onWrong: (note, step) => {

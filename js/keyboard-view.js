@@ -141,14 +141,39 @@ export class KeyboardView {
   applyState(note, state) {
     const key = this.keys.get(note);
     if (!key) return;
+    // A key let go that is needed again (and not yet played for this step)
+    // lights up afresh, so a repeated note is visible as a new hint.
+    if (key.classList.contains('down') && state !== 'down'
+        && key.classList.contains('expected') && !key.classList.contains('hit')) {
+      this.relight(key);
+    }
     key.classList.toggle('down', state === 'down');
     key.classList.toggle('sustained', state === 'sustained');
   }
 
-  // Notes the score expects next (shown as hints).
+  // Notes the score expects next (shown as hints). New hints fade in, also
+  // when the same key was needed (and played) in the step before.
   setExpected(notes) {
     this.expected = new Set(notes);
-    for (const [note, key] of this.keys) key.classList.toggle('expected', this.expected.has(note));
+    for (const [note, key] of this.keys) {
+      const wanted = this.expected.has(note);
+      const fresh = wanted && (!key.classList.contains('expected') || key.classList.contains('hit'));
+      key.classList.remove('hit');
+      key.classList.toggle('expected', wanted);
+      if (fresh) this.relight(key);
+    }
+  }
+
+  // A hinted key was played: its hint fades out (the rest of a chord stays lit).
+  markHit(note) {
+    const key = this.keys.get(note);
+    if (key?.classList.contains('expected')) key.classList.add('hit');
+  }
+
+  relight(key) {
+    key.classList.remove('relight');
+    void key.offsetWidth; // restart the animation
+    key.classList.add('relight');
   }
 
   // Notes sounding while the piece is played back.

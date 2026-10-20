@@ -7,7 +7,6 @@
   --muted: #8d93a0;
   --accent: #4fa3ff;
   --accent-text: #fff;
-  --sustain: #2b5f96;
   --ok: #34c472;
   --warn: #f0b429;
   --err: #ff5d5d;
@@ -365,8 +364,18 @@ body.focus .focus-controls { display: flex; }
 .key.white.sim-range { background: #e9eef5; }
 .key.white.expected { background: #b9f0cf; }
 .key.black.expected { background: #2f8f57; }
-.key.down { background: #4fa3ff !important; } /* not themed: green would look like a key hint */
-.key.sustained { background: var(--sustain) !important; }
+/* Played hint keys fade out; new or repeated hints fade in (keyboard-view.js). */
+.key.white.expected.hit { background: #f4f4f2; transition: background-color 0.35s ease-out; }
+.key.black.expected.hit { background: #1a1a1a; transition: background-color 0.35s ease-out; }
+.key.white.expected.relight:not(.hit) { animation: hint-in-white 0.3s ease-out; }
+.key.black.expected.relight:not(.hit) { animation: hint-in-black 0.3s ease-out; }
+@keyframes hint-in-white { from { background: #f4f4f2; } }
+@keyframes hint-in-black { from { background: #1a1a1a; } }
+/* Pressed and pedal-held keys get a see-through tint, so the hint underneath
+   stays visible (and can be seen fading out). Blue, not themed: green would
+   look like a key hint. */
+.key.down { background-image: linear-gradient(rgba(79, 163, 255, 0.6), rgba(79, 163, 255, 0.6)) !important; }
+.key.sustained { background-image: linear-gradient(rgba(43, 95, 150, 0.6), rgba(43, 95, 150, 0.6)) !important; }
 .key.wrong { background: var(--err) !important; }
 
 .label {

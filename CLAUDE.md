@@ -54,10 +54,12 @@ All built on 2026-10-19:
   needed workarounds for that app's Web MIDI polyfill in `midi-input.js`: old-style
   iterators, continuous device polling, ignoring the add-on's callback errors.
   Keep them when changing MIDI code.
-- MIDIWeb Browser: input works. Playback to the piano didn't, most likely because
-  of `send()` timestamps; since 2026-10-20 the player sends each note when due
-  without a timestamp (`player.js`). Not yet confirmed on the iPad. The connection
+- MIDIWeb Browser lists outputs "Netzwerk Session 1", "CN201 MIDI Bluetooth",
+  "MIDIWeb Out"; `pianoOutput()` skips the virtual ones (playback first went to the
+  network session). The player also sends notes when due, without `send()`
+  timestamps. Playback on the real piano not yet confirmed. The connection
   dialog's "Technische Details" shows the output port and send count/errors.
+- Keep-awake: Screen Wake Lock while a piece is open; unconfirmed in MIDIWeb.
 - Done (2026-10-20): profiles for Emil 🦖 (green theme) and Julia 🦄 (purple theme)
   with a switch button in the header (locked while a piece is open). The DB upgrade to version 2 dropped all
   runs recorded before profiles existed (agreed with the user); runs in old

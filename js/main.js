@@ -9,6 +9,8 @@ import { Player } from './player.js';
 import { renderLibrary } from './library-view.js';
 import { saveBackup, restoreBackup, lastBackup } from './backup.js';
 import * as storage from './storage.js';
+import { runPoints, repeatFactor, levelInfo } from './levels.js';
+import { DIFFICULTIES, estimateDifficulty } from './difficulty.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -236,6 +238,7 @@ let piece = null; // loaded score { title, measureCount, tempo, measures, steps 
 
 async function showLibrary() {
   endSession();
+  renderLevel();
   document.body.classList.remove('focus');
   $('practice-view').hidden = true;
   $('library-view').hidden = false;
@@ -253,7 +256,14 @@ async function showLibrary() {
       await storage.deletePiece(p.id);
       showLibrary();
     },
+    // Tapping the difficulty cycles easy → medium → hard; set by hand, it's kept.
+    onDifficulty: async (p) => {
+      const next = DIFFICULTIES[(DIFFICULTIES.indexOf(p.difficulty) + 1) % DIFFICULTIES.length];
+      await storage.savePiece({ ...p, difficulty: next, difficultyManual: true });
+      showLibrary();
+    },
   });
+  rateNewPieces(pieces);
 
   // Nudge towards a backup once there's practice history worth keeping.
   const practiced = items.some((i) => i.stats);
@@ -322,6 +332,37 @@ $('backup-paste').addEventListener('click', async () => {
     backupStatus(`Zwischenablage konnte nicht gelesen werden: ${err.message || err}`);
   }
 });
+
+// Pieces without a difficulty (new imports, samples, pieces from before this
+// existed) are rated in the background with a hidden score view, then the
+// library is shown again with them in their section.
+let rating = null;
+const unrateable = new Set(); // failed to load; don't retry every time
+
+function rateNewPieces(pieces) {
+  const todo = pieces.filter((p) => !p.difficulty && !unrateable.has(p.id));
+  if (!todo.length || rating) return;
+  rating = (async () => {
+    const box = document.createElement('div');
+    box.style.cssText = 'position: absolute; left: -10000px; top: 0; width: 800px;';
+    box.setAttribute('aria-hidden', 'true');
+    document.body.append(box);
+    const view = new ScoreView(box);
+    for (const p of todo) {
+      try {
+        const difficulty = estimateDifficulty(await view.load(p.content));
+        // Re-read: the piece may have changed or been deleted meanwhile.
+        const stored = await storage.getPiece(p.id);
+        if (stored && !stored.difficulty) await storage.savePiece({ ...stored, difficulty });
+      } catch {
+        unrateable.add(p.id);
+      }
+    }
+    box.remove();
+    rating = null;
+    if (!$('library-view').hidden) showLibrary();
+  })();
+}
 
 async function openRecord(record) {
   // The score must be visible while rendering, or it gets laid out at zero width.
@@ -514,8 +555,8 @@ function startSession() {
       renderStats();
       const options = session.options;
       const previousBest = await bestAccuracy(options, summary.mode);
-      await recordRun(summary);
-      showResults(summary, options, previousBest);
+      const earned = await recordRun(summary);
+      showResults(summary, options, previousBest, earned);
     },
   };
 
@@ -601,9 +642,22 @@ function updateHints() {
   keyboard.setExpected(settings.hints ? expected : new Set());
 }
 
+// Saves the run with its points. Returns { points, factor, before, after }
+// (total points before and after) for the results card.
 async function recordRun(summary) {
-  if (!pieceRecord || !session || summary.correct + summary.wrong + (summary.missed ?? 0) === 0) return;
+  if (!pieceRecord || !session || summary.correct + summary.wrong + (summary.missed ?? 0) === 0) return null;
   const o = session.options;
+  const today = new Date().setHours(0, 0, 0, 0);
+  const runsToday = (await storage.listRuns(pieceRecord.id)).filter((r) => r.date >= today).length;
+  const points = runPoints({
+    notes: summary.correct + (summary.missed ?? 0), // every note of the run (all laps)
+    accuracy: summary.accuracy,
+    mode: summary.mode,
+    tempo: o.tempo,
+    pieceTempo: piece?.tempo,
+    runsToday,
+  });
+  const before = await storage.totalPoints();
   await storage.saveRun({
     pieceId: pieceRecord.id,
     date: Date.now(),
@@ -619,7 +673,10 @@ async function recordRun(summary) {
     completed: true,
     mistakesByMeasure: summary.mistakesByMeasure,
     tempo: summary.mode === 'tempo' ? o.tempo : null,
+    points,
   });
+  renderLevel();
+  return { points, factor: repeatFactor(runsToday), before, after: before + points };
 }
 
 // Best accuracy of earlier completed runs with the same mode, hands and bars.
@@ -633,7 +690,7 @@ async function bestAccuracy(options, mode) {
 
 // ---- Results card ----
 
-function showResults(summary, options, previousBest) {
+function showResults(summary, options, previousBest, earned) {
   const el = (tag, className, text) => {
     const node = document.createElement(tag);
     if (className) node.className = className;
@@ -672,6 +729,8 @@ function showResults(summary, options, previousBest) {
   if (summary.mode === 'tempo') details.push(`${summary.missed} verpasst`, `${pct(summary.timing)} im Takt`);
   card.append(el('div', 'results-details', details.join(' · ')));
 
+  if (earned) card.append(levelProgress(earned));
+
   const trouble = summary.troubleMeasures.slice(0, 3);
   if (trouble.length) {
     const row = el('div', 'results-trouble');
@@ -689,6 +748,80 @@ function showResults(summary, options, previousBest) {
   card.append(actions);
   card.hidden = false;
 }
+
+// ---- Level ----
+
+function setBar(bar, info, instant = false) {
+  bar.classList.toggle('instant', instant);
+  bar.firstElementChild.style.width = `${(100 * info.points) / info.needed}%`;
+  if (instant) void bar.offsetWidth; // apply now, so the next change animates
+}
+
+async function renderLevel() {
+  const info = levelInfo(await storage.totalPoints());
+  $('level').querySelector('[data-level-label]').textContent = `Level ${info.level}`;
+  $('level').title = `${info.points} von ${info.needed} Punkten bis Level ${info.level + 1}`;
+  setBar($('level').querySelector('.level-bar'), info);
+}
+
+// "+90 Punkte" and a bar that fills up from before to after the run. On a new
+// level the bar fills to the end, "Level 4!" pops up and the jingle plays.
+function levelProgress({ points, factor, before, after }) {
+  const box = document.createElement('div');
+  box.className = 'results-level';
+  const pointsLine = document.createElement('div');
+  pointsLine.className = 'results-points';
+  pointsLine.textContent = `+${points} Punkte`;
+  if (factor < 1) {
+    const note = document.createElement('small');
+    note.textContent = ' (heute schon oft gespielt)';
+    pointsLine.append(note);
+  }
+  const row = document.createElement('div');
+  row.className = 'results-level-row';
+  const label = document.createElement('span');
+  const count = document.createElement('span');
+  row.append(label, count);
+  const bar = document.createElement('span');
+  bar.className = 'level-bar';
+  bar.append(document.createElement('span'));
+  box.append(pointsLine, row, bar);
+
+  const start = levelInfo(before);
+  const end = levelInfo(after);
+  const show = (info) => {
+    label.textContent = `Level ${info.level}`;
+    count.textContent = `${info.points} / ${info.needed}`;
+  };
+  show(start);
+  setBar(bar, start, true);
+  const later = (ms, fn) => timers.push(setTimeout(fn, ms));
+  if (end.level === start.level) {
+    later(300, () => { show(end); setBar(bar, end); });
+  } else {
+    later(300, () => setBar(bar, { points: 1, needed: 1 }));
+    later(1300, () => {
+      show(end);
+      setBar(bar, { points: 0, needed: 1 }, true);
+      setBar(bar, end);
+      const up = document.createElement('div');
+      up.className = 'level-up';
+      up.textContent = `Level ${end.level}! 🎉`;
+      box.prepend(up);
+      playJingle();
+    });
+  }
+  return box;
+}
+
+function playJingle() {
+  const output = settings.sound === 'piano' ? midi.pianoOutput() : null;
+  player.playJingle(output);
+}
+
+// iOS only allows sound after a tap; the jingle comes after playing on the
+// piano, so get the audio ready on any tap before that.
+document.addEventListener('pointerdown', () => player.unlock());
 
 // ---- Stats & messages ---------------------------------------------------------
 
@@ -821,7 +954,7 @@ $('connect').addEventListener('click', () => midi.connect());
 
 // Handle for debugging from the browser console (e.g. replaying recorded input).
 window.pianoTrainer = {
-  midi, score, storage, settings,
+  midi, score, storage, settings, player,
   get piece() { return piece; },
   get session() { return session; },
 };

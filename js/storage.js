@@ -76,7 +76,7 @@ export async function deletePiece(id) {
 
 // ---- Practice runs ------------------------------------------------------------
 // { profile, pieceId, date, mode, hands, fromMeasure, toMeasure, fullPiece, accuracy, wrong,
-//   seconds, laps, completed, mistakesByMeasure, tempo }
+//   seconds, laps, completed, mistakesByMeasure, tempo, points }
 
 export const saveRun = (run) => tx('runs', 'readwrite', (s) => s.add({ profile: currentProfile().id, ...run }));
 
@@ -85,6 +85,12 @@ export const listRuns = (pieceId, profile = currentProfile().id) =>
   tx('runs', 'readonly', (s) => (profile
     ? s.index('profilePiece').getAll([profile, pieceId])
     : s.index('pieceId').getAll(pieceId)));
+
+// All points the profile has earned (its level comes from this, see levels.js).
+export async function totalPoints(profile = currentProfile().id) {
+  const runs = await listAllRuns();
+  return runs.reduce((sum, r) => sum + (r.profile === profile ? r.points ?? 0 : 0), 0);
+}
 
 // Summary per piece for the library list.
 export async function pieceStats(pieceId) {

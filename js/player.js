@@ -131,6 +131,24 @@ export class Player {
     };
   }
 
+  // A short "ta-da" for reaching a new level, on the piano or the device.
+  playJingle(output) {
+    if (this.playing) return;
+    this.output = output;
+    this.voices = new Map();
+    this.active = new Set();
+    const t0 = performance.now() + 60;
+    const notes = [
+      // [start s, midi, length s]: quick arpeggio up, then a held chord
+      [0, 67, 0.12], [0.11, 72, 0.12], [0.22, 76, 0.12], [0.33, 79, 0.15],
+      [0.5, 60, 1.1], [0.5, 84, 1.1], [0.5, 88, 1.1],
+    ];
+    for (const [start, midi, length] of notes) {
+      this.send({ type: 'on', midi, time: t0 + start * 1000 });
+      this.send({ type: 'off', midi, time: t0 + (start + length) * 1000 });
+    }
+  }
+
   finish() {
     this.stop();
     this.cb?.onEnd?.();

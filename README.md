@@ -11,6 +11,16 @@ Live: https://diivii.github.io/piano-trainer/
 - **Profiles** for Emil 🦖 and Julia 🦄: tap the button at the top of the library
   to switch. Each has a color theme (green / purple) so it's clear whose turn it is.
   Pieces are shared; practice history, stats and settings are per child
+- **Levels**: every finished run earns points (notes played × accuracy², ×1.5 or
+  more in tempo mode, fewer from the 3rd run of a piece on the same day). The
+  level and a progress bar sit in the header; the results card fills the bar and
+  plays a little jingle on a new level
+- **Difficulty**: the library is sorted into Leicht / Mittel / Schwer. Each piece
+  is rated automatically from its notes (speed, chords, both hands, hand range,
+  black keys, length); tap the label on a card to change it
+- **17 built-in pieces** from easy to hard: children's songs (Alle meine Entchen,
+  Hänschen klein, …), Stille Nacht, When the Saints, Kanon in D, Gymnopédie,
+  Für Elise, Bach's Präludium in C and more (all public domain)
 - **Library**: imported pieces are stored on the device, with last practiced,
   number of runs, best accuracy and the bars with the most mistakes
 - **Sheet music** from MusicXML (`.musicxml`, `.xml`, `.mxl`), rendered with
@@ -75,6 +85,8 @@ Locally there's no `version.json` and files load unversioned ("lokal").
 | `js/midi-input.js` | All piano input (Web MIDI + simulator) as normalized events. The only part to replace for a native app. |
 | `js/score-view.js` | Sheet music rendering, cursor, note colors; turns a score into practice steps |
 | `js/practice.js` | Wait-mode logic, hands, looping, mistake stats (no display code) |
+| `js/difficulty.js` | Estimates a piece's difficulty from its score |
+| `js/levels.js` | Points per run and level calculation |
 | `js/tempo-practice.js` | Tempo-mode logic and timing judgement |
 | `js/metronome.js` | Metronome clicks via Web Audio |
 | `js/player.js` | Plays a piece back (MIDI out to the piano, or a Web Audio synth) |

@@ -40,5 +40,65 @@
     "file": "ode-to-joy.musicxml",
     "title": "Ode an die Freude",
     "composer": "L. v. Beethoven (einfache Bearbeitung)"
+  },
+  {
+    "id": "sample-alle-meine-entchen",
+    "file": "alle-meine-entchen.musicxml",
+    "title": "Alle meine Entchen",
+    "composer": "Volkslied (einfache Bearbeitung)"
+  },
+  {
+    "id": "sample-haenschen-klein",
+    "file": "haenschen-klein.musicxml",
+    "title": "Hänschen klein",
+    "composer": "Volkslied (einfache Bearbeitung)"
+  },
+  {
+    "id": "sample-happy-birthday",
+    "file": "happy-birthday.musicxml",
+    "title": "Happy Birthday",
+    "composer": "M. J. und P. S. Hill (einfache Bearbeitung)"
+  },
+  {
+    "id": "sample-kanon-in-d",
+    "file": "kanon-in-d.musicxml",
+    "title": "Kanon in D (Thema)",
+    "composer": "J. Pachelbel (einfache Bearbeitung)"
+  },
+  {
+    "id": "sample-when-the-saints",
+    "file": "when-the-saints.musicxml",
+    "title": "When the Saints Go Marching In",
+    "composer": "Spiritual (einfache Bearbeitung)"
+  },
+  {
+    "id": "sample-stille-nacht",
+    "file": "stille-nacht.musicxml",
+    "title": "Stille Nacht",
+    "composer": "F. X. Gruber (einfache Bearbeitung)"
+  },
+  {
+    "id": "sample-gymnopedie-1",
+    "file": "gymnopedie-1.musicxml",
+    "title": "Gymnopédie Nr. 1 (Anfang)",
+    "composer": "E. Satie (vereinfacht)"
+  },
+  {
+    "id": "sample-halle-des-bergkoenigs",
+    "file": "halle-des-bergkoenigs.musicxml",
+    "title": "In der Halle des Bergkönigs",
+    "composer": "E. Grieg (vereinfacht)"
+  },
+  {
+    "id": "sample-praeludium-c-dur",
+    "file": "praeludium-c-dur.musicxml",
+    "title": "Präludium in C-Dur (Anfang)",
+    "composer": "J. S. Bach (vereinfacht)"
+  },
+  {
+    "id": "sample-fuer-elise",
+    "file": "fuer-elise.musicxml",
+    "title": "Für Elise (Anfang)",
+    "composer": "L. v. Beethoven (vereinfacht)"
   }
 ]

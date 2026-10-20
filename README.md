@@ -56,7 +56,8 @@ Simulator keys: `A`–`'` white keys, `W E T Y U O P` black keys, `Z`/`X` octave
 ## On the iPad
 
 Safari doesn't support Web MIDI. Open the live URL in a Web MIDI capable browser
-such as "Web MIDI Browser", and connect the piano via USB or Bluetooth MIDI (pair
+such as "MIDIWeb Browser" (it reopens the last page, so a Shortcuts icon on the
+home screen that opens the app works like an app icon), and connect the piano via USB or Bluetooth MIDI (pair
 Bluetooth inside that app, not in iOS Settings). Tap the connection pill in the
 top-right for status and the MIDI log.
 

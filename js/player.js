@@ -5,9 +5,34 @@
 
 import { STAFF } from './score-view.js';
 
-const LOOKAHEAD_MS = 40; // send notes this far ahead of time
+const LOOKAHEAD_MS = 40; // schedule device-sound notes this far ahead of time
 const TICK_MS = 15;
 const VELOCITY = 72;
+
+// What happened when sending to the piano, shown in the connection dialog.
+export const outputStats = { sent: 0, errors: 0, lastError: null, port: null };
+
+// Notes go to the piano right when they are due, without a send() timestamp:
+// Web MIDI browsers on iOS read timestamps differently (MIDIWeb Browser seems
+// to drop or delay notes that have one).
+function sendNow(output, data) {
+  try {
+    output.send(data);
+    outputStats.sent++;
+  } catch (err) {
+    outputStats.errors++;
+    outputStats.lastError = err?.message || String(err);
+  }
+}
+
+function openOutput(output) {
+  outputStats.port = output ? `${output.name ?? '?'} (${output.state ?? '?'}, ${output.connection ?? '?'})` : null;
+  try {
+    output?.open?.()?.catch?.(() => {});
+  } catch {
+    // open() is optional; send() opens the port too
+  }
+}
 
 export class Player {
   constructor() {
@@ -53,6 +78,7 @@ export class Player {
       .sort((a, b) => a.time - b.time || (a.type === 'off' ? -1 : 1));
 
     this.output = output;
+    openOutput(output);
     this.cb = callbacks;
     this.voices = new Map(); // midi -> synth voice (device sound)
     this.active = new Set(); // notes sent to the piano and not yet released
@@ -64,7 +90,8 @@ export class Player {
 
     this.timer = setInterval(() => {
       const now = performance.now();
-      while (next < events.length && events[next].time <= now + LOOKAHEAD_MS) this.send(events[next++]);
+      const ahead = this.output ? 0 : LOOKAHEAD_MS;
+      while (next < events.length && events[next].time <= now + ahead) this.send(events[next++]);
       // The display follows the actual time, not the lookahead.
       let changed = false;
       while (shown < events.length && events[shown].time <= now) {
@@ -83,12 +110,7 @@ export class Player {
     if (this.output) {
       if (e.type === 'on') this.active.add(e.midi);
       else this.active.delete(e.midi);
-      const data = e.type === 'on' ? [0x90, e.midi, VELOCITY] : [0x80, e.midi, 0];
-      try {
-        this.output.send(data, e.time);
-      } catch {
-        this.output.send(data);
-      }
+      sendNow(this.output, e.type === 'on' ? [0x90, e.midi, VELOCITY] : [0x80, e.midi, 0]);
       return;
     }
     if (e.type === 'on') {
@@ -135,17 +157,20 @@ export class Player {
   playJingle(output) {
     if (this.playing) return;
     this.output = output;
+    openOutput(output);
     this.voices = new Map();
     this.active = new Set();
     const t0 = performance.now() + 60;
+    // The piano gets each note when it's due; the device sound is scheduled ahead.
+    const send = (e) => (output ? setTimeout(() => this.send(e), e.time - performance.now()) : this.send(e));
     const notes = [
       // [start s, midi, length s]: quick arpeggio up, then a held chord
       [0, 67, 0.12], [0.11, 72, 0.12], [0.22, 76, 0.12], [0.33, 79, 0.15],
       [0.5, 60, 1.1], [0.5, 84, 1.1], [0.5, 88, 1.1],
     ];
     for (const [start, midi, length] of notes) {
-      this.send({ type: 'on', midi, time: t0 + start * 1000 });
-      this.send({ type: 'off', midi, time: t0 + (start + length) * 1000 });
+      send({ type: 'on', midi, time: t0 + start * 1000 });
+      send({ type: 'off', midi, time: t0 + (start + length) * 1000 });
     }
   }
 
@@ -160,15 +185,8 @@ export class Player {
     this.timer = null;
     const now = performance.now();
     if (this.output) {
-      // Notes already sent ahead may still be on their way, so release
-      // everything just after them.
-      const later = now + LOOKAHEAD_MS + 10;
-      for (const midi of [...this.active]) this.send({ type: 'off', midi, time: later });
-      try {
-        this.output.send([0xb0, 123, 0], later); // all notes off
-      } catch {
-        // not every implementation accepts it
-      }
+      for (const midi of [...this.active]) this.send({ type: 'off', midi, time: now });
+      sendNow(this.output, [0xb0, 123, 0]); // all notes off
     }
     for (const voice of this.voices.values()) voice?.stop(now);
     this.voices.clear();

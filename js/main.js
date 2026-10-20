@@ -5,7 +5,7 @@ import { ScoreView, NOTE_COLOR } from './score-view.js';
 import { PracticeSession } from './practice.js';
 import { TempoSession, JUDGEMENT } from './tempo-practice.js';
 import { Metronome } from './metronome.js';
-import { Player } from './player.js';
+import { Player, outputStats } from './player.js';
 import { renderLibrary } from './library-view.js';
 import { saveBackup, restoreBackup, lastBackup } from './backup.js';
 import * as storage from './storage.js';
@@ -945,7 +945,9 @@ $('profile').addEventListener('click', async () => {
 });
 setInterval(() => {
   if (!$('midi-dialog').open) return;
-  $('midi-diagnostics').textContent = `App-Version: ${window.appVersion ?? '?'}\n${midi.status.diagnostics ?? 'Noch kein MIDI-Zugriff.'}`;
+  const out = outputStats;
+  const sent = `to piano: ${out.port ?? '(nothing played yet)'}, sent ${out.sent}, errors ${out.errors}${out.lastError ? ` (${out.lastError})` : ''}`;
+  $('midi-diagnostics').textContent = `App-Version: ${window.appVersion ?? '?'}\n${midi.status.diagnostics ?? 'Noch kein MIDI-Zugriff.'}\n${sent}`;
 }, 500);
 $('midi-close').addEventListener('click', () => $('midi-dialog').close());
 $('connect').addEventListener('click', () => midi.connect());

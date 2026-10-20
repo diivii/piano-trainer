@@ -2,7 +2,9 @@
 
 Personal piano practice web app. Reads a digital piano (Kawai CN201) over Web MIDI,
 shows MusicXML sheet music (OpenSheetMusicDisplay) and follows along as you play.
-Main target is an **iPad in the "Web MIDI Browser" app** (Safari has no Web MIDI);
+Main target is an **iPad in the "MIDIWeb Browser" app** (Safari has no Web MIDI;
+switched from the old "Web MIDI Browser" on 2026-10-20 because MIDIWeb reopens the
+last page, so a Shortcuts home-screen icon can open the app directly);
 desktop Chrome/Edge is used for development.
 
 Live: https://diivii.github.io/piano-trainer/
@@ -52,6 +54,10 @@ All built on 2026-10-19:
   needed workarounds for that app's Web MIDI polyfill in `midi-input.js`: old-style
   iterators, continuous device polling, ignoring the add-on's callback errors.
   Keep them when changing MIDI code.
+- MIDIWeb Browser: input works. Playback to the piano didn't, most likely because
+  of `send()` timestamps; since 2026-10-20 the player sends each note when due
+  without a timestamp (`player.js`). Not yet confirmed on the iPad. The connection
+  dialog's "Technische Details" shows the output port and send count/errors.
 - Done (2026-10-20): profiles for Emil 🦖 (green theme) and Julia 🦄 (purple theme)
   with a switch button in the header (locked while a piece is open). The DB upgrade to version 2 dropped all
   runs recorded before profiles existed (agreed with the user); runs in old

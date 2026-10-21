@@ -45,7 +45,9 @@ Live: https://diivii.github.io/piano-trainer/
 - Practice hands separately, loop a range of bars, key hints on the keyboard
 - Every run is saved; settings are remembered
 - **Backup / restore** of pieces and history as a JSON file
-- Touch-friendly layout with focus mode and note zoom
+- Sheet music as one long line that fills the height and scrolls along with the cursor
+  (＋/− adjusts the size)
+- Touch-friendly layout with focus mode
 - Computer-keyboard / mouse simulator and a MIDI event log for testing
 
 ## Running locally
@@ -93,7 +95,7 @@ Locally there's no `version.json` and files load unversioned ("lokal").
 | `app.html` | The app's markup (library, practice screen, dialogs) |
 | `js/main.js` | App controller: library and practice screens, wiring |
 | `js/midi-input.js` | All piano input (Web MIDI + simulator) as normalized events. The only part to replace for a native app. |
-| `js/score-view.js` | Sheet music rendering, cursor, note colors; turns a score into practice steps |
+| `js/score-view.js` | Sheet music rendering (single scrolling line), cursor, note colors; turns a score into practice steps |
 | `js/practice.js` | Wait-mode logic, hands, looping, mistake stats (no display code) |
 | `js/difficulty.js` | Estimates a piece's difficulty from its score |
 | `js/levels.js` | Points per run and level calculation |

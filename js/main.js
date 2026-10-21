@@ -93,7 +93,7 @@ function syncControls() {
 }
 
 // Settings that only change the display; everything else restarts the run.
-const DISPLAY_ONLY = new Set(['hints', 'zoom', 'keyboard', 'sound']);
+const DISPLAY_ONLY = new Set(['hints', 'scale', 'keyboard', 'sound']);
 
 function setSetting(key, value) {
   settings[key] = value;
@@ -222,7 +222,7 @@ $('zoom-in').addEventListener('click', () => changeZoom(0.1));
 $('zoom-out').addEventListener('click', () => changeZoom(-0.1));
 function changeZoom(delta) {
   score.setZoom(score.zoom + delta);
-  setSetting('zoom', score.zoom);
+  setSetting('scale', score.zoom);
 }
 
 $('focus').addEventListener('click', () => document.body.classList.add('focus'));
@@ -1052,7 +1052,7 @@ $('profile').addEventListener('click', async () => {
   Object.assign(settings, storage.loadSettings());
   renderProfile();
   syncControls();
-  score.setZoom(settings.zoom);
+  score.setZoom(settings.scale);
   const button = $('profile');
   button.classList.remove('bump');
   void button.offsetWidth; // restart the animation
@@ -1079,7 +1079,7 @@ window.pianoTrainer = {
 
 renderProfile();
 syncControls();
-score.setZoom(settings.zoom);
+score.setZoom(settings.scale);
 midi.connect();
 storage.requestPersistence();
 await ensureSamples();

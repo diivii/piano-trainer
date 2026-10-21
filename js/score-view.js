@@ -20,26 +20,60 @@ export class ScoreView {
   constructor(container) {
     this.container = container;
     this.osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(container, {
-      autoResize: true,
+      autoResize: false, // single line: only the height matters, see the ResizeObserver
       backend: 'svg',
       drawTitle: false,
       drawComposer: false,
       drawPartNames: false,
-      followCursor: true,
+      followCursor: false, // scrolled by follow()
+      renderSingleHorizontalStaffline: true,
     });
+    this.scale = 1; // user zoom on top of fitting the line to the height
     this.steps = [];
     this.stepNotes = []; // step index -> OSMD notes, parallel to step.notes
     this.colors = new Map(); // step index -> [color per note]
     this.cursorIndex = 0;
     this.section = null; // { from, to, pending } highlighted bars
 
-    // Every render (including the library's own on window resize) redraws the
-    // SVG, so note colors and bar highlights are re-applied afterwards.
+    // Every render redraws the SVG, so note colors and bar highlights are
+    // re-applied afterwards.
     const render = this.osmd.render.bind(this.osmd);
     this.osmd.render = () => {
       render();
       this.afterRender();
     };
+
+    // The whole piece is one long line that scrolls sideways; it is zoomed so
+    // the line fills the height (focus mode and keyboard size change it).
+    // Watches the parent: its size doesn't depend on the score's scrollbars.
+    let lastHeight = 0;
+    new ResizeObserver(() => requestAnimationFrame(() => {
+      const height = this.container.clientHeight;
+      if (height === lastHeight) return this.follow(false);
+      lastHeight = height;
+      if (this.steps.length) this.fit();
+    })).observe(container.parentElement);
+  }
+
+  // Zoom so the staff line fills the container's height (times this.scale).
+  fit() {
+    const svg = this.container.querySelector('svg');
+    const height = this.container.clientHeight;
+    const drawn = parseFloat(svg?.getAttribute('height'));
+    if (!height || !drawn) return; // hidden (e.g. the background difficulty rating)
+    const zoom = Math.min(5, Math.max(0.4, ((height * 0.92) / (drawn / this.osmd.zoom)) * this.scale));
+    if (Math.abs(zoom - this.osmd.zoom) / this.osmd.zoom < 0.02) return;
+    this.osmd.zoom = zoom;
+    this.osmd.render();
+  }
+
+  // Keep the cursor about a third from the left, so the next bars are visible.
+  follow(smooth = true) {
+    const el = this.osmd.cursor?.cursorElement;
+    if (!el || el.style.display === 'none') return;
+    const x = el.getBoundingClientRect().left - this.container.getBoundingClientRect().left + this.container.scrollLeft;
+    const left = Math.max(0, x - this.container.clientWidth * 0.3);
+    this.container.scrollTo({ left, behavior: smooth ? 'smooth' : 'auto' });
   }
 
   // content: MusicXML text, or the binary string of a compressed .mxl file.
@@ -51,7 +85,9 @@ export class ScoreView {
     this.osmd.render();
     this.osmd.cursor.show();
     this.steps = this.extractSteps();
+    this.fit();
     this.moveTo(0);
+    this.follow(false);
     const sheet = this.osmd.Sheet;
     return {
       title: sheet.TitleString || 'Untitled',
@@ -116,6 +152,7 @@ export class ScoreView {
       this.cursorIndex++;
     }
     cursor.show();
+    this.follow();
   }
 
   hideCursor() {
@@ -123,12 +160,12 @@ export class ScoreView {
   }
 
   get zoom() {
-    return this.osmd.zoom;
+    return this.scale;
   }
 
   setZoom(zoom) {
-    this.osmd.zoom = Math.min(2, Math.max(0.5, zoom));
-    if (this.steps.length) this.osmd.render();
+    this.scale = Math.round(Math.min(1.5, Math.max(0.5, zoom)) * 10) / 10;
+    if (this.steps.length) this.fit();
   }
 
   afterRender() {
@@ -138,6 +175,7 @@ export class ScoreView {
     }
     this.osmd.cursor.update();
     this.drawSection();
+    this.follow(false);
   }
 
   // ---- Bars: hit testing and highlighting ----

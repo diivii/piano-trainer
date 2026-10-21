@@ -37,6 +37,9 @@ body[data-profile="julia"] {
 
 html, body { height: 100%; }
 
+/* index.html loads the page into #app; it passes the full height on. */
+#app { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
 body {
   margin: 0;
   display: flex;
@@ -304,7 +307,7 @@ kbd {
   inset: 0;
   background: #fff;
   border-radius: var(--radius);
-  overflow-y: auto;
+  overflow: auto; /* one long line, scrolled sideways along with the cursor */
   -webkit-overflow-scrolling: touch;
 }
 
@@ -513,7 +516,7 @@ body.focus .focus-controls { display: flex; }
   border-radius: 4px;
 }
 .bar-layer.pending .bar-mark { border-style: dashed; }
-.score { cursor: pointer; overflow-x: hidden; }
+.score { cursor: pointer; }
 
 .section-chip {
   position: absolute;

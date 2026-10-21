@@ -30,6 +30,7 @@ SEARCH_SECONDS = 3  # a broad search stops after this and offers "Mehr laden"
 parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument('--data', type=Path, default=pdmx.DATA, help='PDMX folder (default: ../PDMX)')
 parser.add_argument('--no-push', action='store_true', help='add pieces without committing and pushing')
+parser.add_argument('--port', type=int, default=PORT)
 args = parser.parse_args()
 
 print('Loading the catalog…')
@@ -147,7 +148,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             super().log_message(format, *items)
 
 
-with http.server.ThreadingHTTPServer(('127.0.0.1', PORT), partial(Handler, directory=str(ROOT))) as server:
-    print(f'{len(ROWS)} pieces. Search page at http://localhost:{PORT}  (Ctrl+C to stop)'
+class Server(http.server.ThreadingHTTPServer):
+    # On Windows, address reuse lets a second server share the port silently
+    # (requests then go to either one); fail instead if it's taken.
+    allow_reuse_address = False
+
+
+try:
+    server = Server(('127.0.0.1', args.port), partial(Handler, directory=str(ROOT)))
+except OSError:
+    sys.exit(f'Port {args.port} is in use: is the catalog already running? (--port picks another)')
+with server:
+    print(f'{len(ROWS)} pieces. Search page at http://localhost:{args.port}  (Ctrl+C to stop)'
           + ('  [--no-push]' if args.no_push else ''))
     server.serve_forever()

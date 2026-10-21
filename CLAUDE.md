@@ -51,8 +51,12 @@ the project and where it stands.
   have broken umlauts; give German titles with `--title`.
 - The user adds pieces themselves with the search page (`start-katalog.cmd`,
   `tools/catalog.py` on port 8020; 8002 is taken by another program on this PC).
-  Adding commits only that piece's files and pushes. Test with `--no-push`
-  (launch config `catalog-no-push`) and undo test additions with git.
+  Adding commits only that piece's files and pushes; "Herunterladen" saves a
+  file for a private import on the iPad instead (no direct USB copy: the app's
+  pieces live in MIDIWeb's IndexedDB, not in a folder). Test with `--no-push`
+  (launch config `catalog-no-push`, port 8021; the user may have their own on
+  8020) and undo test additions with git. The server refuses a taken port:
+  Windows otherwise lets two servers share it.
 
 ## Current status (2026-10-20)
 

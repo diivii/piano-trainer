@@ -73,6 +73,9 @@ With a local copy of PDMX in `../PDMX` (see `tools/pdmx.py`), double-click
 http://localhost:8020: search, preview the score with its estimated difficulty,
 give it a German title and add it. Adding commits and pushes just that piece,
 so it is on the live site about a minute later. `--no-push` only adds locally.
+"Herunterladen" saves the score as a `.musicxml` file instead (with the chosen
+title and composer inside) to import on the iPad with "+ Stück importieren":
+private to that device, never on the site.
 
 Simulator keys: `A`–`'` white keys, `W E T Y U O P` black keys, `Z`/`X` octave,
 `Space` sustain pedal, hold `Shift` for loud notes.

@@ -91,12 +91,15 @@
         <span></span><span></span>
         <div class="actions">
           <button class="primary" id="add" type="submit">Zur Bibliothek hinzufügen</button>
+          <button id="download" type="button" title="Nur für dieses iPad: Datei herunterladen und in der App über „Stück importieren“ öffnen">Herunterladen</button>
           <span class="facts" id="facts"></span>
         </div>
       </form>
-      <p class="note">Bitte prüfen: nur alte Musik (Komponist seit über 70 Jahren tot). Manche Noten sind
+      <p class="facts">„Herunterladen“ speichert die Noten als Datei, ohne sie zu veröffentlichen. Auf dem iPad
+        in der App mit „+ Stück importieren“ öffnen; dann sind sie nur auf diesem Gerät.</p>
+      <p class="note">Zur Bibliothek nur alte Musik (Komponist seit über 70 Jahren tot). Manche Noten sind
         auf MuseScore fälschlich als gemeinfrei markiert, z. B. Film- oder Popmusik, die gehören nicht
-        auf die öffentliche Seite.</p>
+        auf die öffentliche Seite. Solche Stücke lieber herunterladen.</p>
       <div id="status"></div>
     </div>
     <div class="score-box" id="score-box" hidden><div id="score"></div></div>
@@ -173,6 +176,7 @@ async function select(hit, li) {
   $('status').textContent = '';
   $('status').className = '';
   $('add').disabled = false;
+  $('download').disabled = false;
   $('add').textContent = hit.inLibrary ? 'Erneut hinzufügen (ersetzt)' : 'Zur Bibliothek hinzufügen';
   $('facts').textContent = '';
   $('score').classList.add('loading');
@@ -193,6 +197,7 @@ async function select(hit, li) {
     if (token !== loadToken) return;
     $('facts').textContent = `Diese Noten lassen sich nicht anzeigen: ${err.message || err}`;
     $('add').disabled = true;
+    $('download').disabled = true;
   } finally {
     if (token === loadToken) $('score').classList.remove('loading');
   }
@@ -225,6 +230,59 @@ function shortComposer(composer) {
   if (parts.length < 2) return name;
   return [...parts.slice(0, -1).map((p) => `${p[0]}.`), parts.at(-1)].join(' ');
 }
+
+// ---- Download (private, for importing on the iPad) ----
+
+$('download').addEventListener('click', async () => {
+  if (!selected) return;
+  const title = $('title').value.trim() || selected.hit.title;
+  const xml = await (await fetch(`/api/score?mxl=${encodeURIComponent(selected.hit.mxl)}`)).text();
+  const file = retitle(xml, title, $('composer').value.trim(), Number($('tempo').value) || null);
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(new Blob([file], { type: 'application/vnd.recordare.musicxml+xml' }));
+  link.download = `${title.replace(/[\\/:*?"<>|]+/g, ' ').trim()}.musicxml`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+  $('status').className = 'ok';
+  $('status').textContent = `„${link.download}“ ist im Download-Ordner. Aufs iPad bringen und in der App mit „+ Stück importieren“ öffnen.`;
+});
+
+// Puts the chosen title, composer and tempo into the file: the app takes
+// them from there when importing.
+function retitle(xml, title, composer, tempo) {
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  const root = doc.documentElement;
+  const child = (parent, name) => [...parent.children].find((el) => el.tagName === name);
+  for (const name of ['work', 'movement-number', 'movement-title']) child(root, name)?.remove();
+  // Printed title/composer lines win over the fields below when reading; the app doesn't show them.
+  for (const credit of [...root.children].filter((el) => el.tagName === 'credit')) credit.remove();
+  const work = doc.createElement('work');
+  const workTitle = doc.createElement('work-title');
+  workTitle.textContent = title;
+  work.append(workTitle);
+  root.insertBefore(work, root.firstElementChild);
+  if (composer) {
+    let identification = child(root, 'identification');
+    if (!identification) {
+      identification = doc.createElement('identification');
+      work.after(identification);
+    }
+    let creator = [...identification.children].find((el) => el.tagName === 'creator' && el.getAttribute('type') === 'composer');
+    if (!creator) {
+      creator = doc.createElement('creator');
+      creator.setAttribute('type', 'composer');
+      identification.prepend(creator);
+    }
+    creator.textContent = composer;
+  }
+  if (tempo) {
+    doc.querySelector('sound[tempo]')?.setAttribute('tempo', tempo);
+    const perMinute = doc.querySelector('per-minute');
+    if (perMinute) perMinute.textContent = tempo;
+  }
+  return new XMLSerializer().serializeToString(doc);
+}
+window.retitle = retitle; // for testing from the console
 
 $('add-form').addEventListener('submit', async (e) => {
   e.preventDefault();

@@ -66,6 +66,14 @@ python tools/serve.py
 then open http://localhost:8000 in Chrome or Edge. The server disables caching,
 so a refresh always loads the latest code.
 
+## Adding pieces from the catalog
+
+With a local copy of PDMX in `../PDMX` (see `tools/pdmx.py`), double-click
+`start-katalog.cmd` (or `python -X utf8 tools/catalog.py`) and use the page at
+http://localhost:8020: search, preview the score with its estimated difficulty,
+give it a German title and add it. Adding commits and pushes just that piece,
+so it is on the live site about a minute later. `--no-push` only adds locally.
+
 Simulator keys: `A`–`'` white keys, `W E T Y U O P` black keys, `Z`/`X` octave,
 `Space` sustain pedal, hold `Shift` for loud notes.
 
@@ -117,4 +125,6 @@ Locally there's no `version.json` and files load unversioned ("lokal").
 | `tools/stamp_version.py` | Adds the version to imports and writes `version.json` (used when publishing) |
 | `tools/make_samples.py` | Generates the built-in arrangements and `samples/index.json` |
 | `tools/pdmx.py` | Piano catalog of a local PDMX copy (`../PDMX`): search it, add scores as samples |
+| `tools/catalog.py`, `tools/catalog.html` | Local search page for that catalog (preview, add and publish) |
+| `start-katalog.cmd` | Starts the search page |
 | `tools/originals.json` | The samples taken from PDMX, with their source file and license |

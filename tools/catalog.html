@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notenkatalog</title>
+<!-- Search page for the PDMX piano catalog; only works with its local server (tools/catalog.py). -->
+<style>
+  :root {
+    --bg: #14161b; --panel: #1d2027; --panel-2: #262a33; --border: #353a45;
+    --text: #e8e9ec; --muted: #8d93a0; --accent: #4fa3ff; --ok: #34c472; --warn: #f0b429; --err: #ff5d5d;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: flex; flex-direction: column; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  header { padding: 0.8rem 1rem; border-bottom: 1px solid var(--border); display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+  header h1 { font-size: 1.1rem; margin: 0; }
+  header p { margin: 0; color: var(--muted); font-size: 0.85rem; flex: 1; min-width: 20rem; }
+  main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(22rem, 1fr) 2fr; }
+  button, input { font: inherit; color: inherit; }
+  button {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.45rem 0.9rem; cursor: pointer;
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  input { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 0.45rem 0.6rem; }
+
+  .results { border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; }
+  .search { display: flex; gap: 0.5rem; padding: 0.8rem; }
+  .search input { flex: 1; }
+  #hits { list-style: none; margin: 0; padding: 0 0.8rem 0.8rem; overflow-y: auto; flex: 1; }
+  #hits li {
+    padding: 0.55rem 0.7rem; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.4rem;
+    background: var(--panel); cursor: pointer;
+  }
+  #hits li:hover { border-color: var(--muted); }
+  #hits li.selected { border-color: var(--accent); }
+  #hits .title { font-weight: 600; }
+  #hits .meta { color: var(--muted); font-size: 0.82rem; margin-top: 0.15rem; }
+  .badge { font-size: 0.75rem; color: var(--ok); border: 1px solid var(--ok); border-radius: 999px; padding: 0 0.45rem; margin-left: 0.3rem; }
+  #more { margin: 0 0.8rem 0.8rem; }
+  .empty { color: var(--muted); padding: 0 0.8rem; }
+
+  .preview { display: flex; flex-direction: column; min-height: 0; padding: 0.8rem; gap: 0.6rem; }
+  .preview .empty { padding: 2rem 0; }
+  .form { display: grid; grid-template-columns: auto 1fr auto 6rem; gap: 0.5rem 0.6rem; align-items: center; }
+  .form label { color: var(--muted); font-size: 0.85rem; }
+  .form .actions { grid-column: 1 / -1; display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; }
+  .facts { color: var(--muted); font-size: 0.9rem; }
+  .facts b { color: var(--text); }
+  .note { font-size: 0.82rem; color: var(--warn); }
+  #status { white-space: pre-wrap; font-size: 0.85rem; }
+  #status.ok { color: var(--ok); }
+  #status.error { color: var(--err); }
+  .score-box { position: relative; flex: 1; min-height: 12rem; }
+  #score { position: absolute; inset: 0; background: #fff; border-radius: 10px; overflow: auto; }
+  #score.loading::after { content: 'Noten werden geladen…'; position: absolute; top: 1rem; left: 1rem; color: #555; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎹 Notenkatalog</h1>
+  <p>Gemeinfreie Klaviernoten aus PDMX (MuseScore). Hinzugefügte Stücke kommen in die Bibliothek
+    und sind etwa eine Minute später auf dem iPad.</p>
+</header>
+<main>
+  <section class="results">
+    <form class="search" id="search-form">
+      <input id="query" type="search" placeholder="z. B. chopin nocturne, bach invention, satie" autofocus>
+      <button class="primary" type="submit">Suchen</button>
+    </form>
+    <p class="empty" id="hint">Suche nach Titel oder Komponist; englische Titel finden oft mehr.</p>
+    <ul id="hits"></ul>
+    <button id="more" type="button" hidden>Mehr laden</button>
+  </section>
+
+  <section class="preview">
+    <p class="empty" id="no-selection">Wähle links ein Stück, um die Noten zu sehen.</p>
+    <div id="details" hidden>
+      <form class="form" id="add-form">
+        <label for="title">Titel</label>
+        <input id="title" required>
+        <label for="tempo">Tempo</label>
+        <input id="tempo" type="number" min="20" max="240" placeholder="aus Noten">
+        <label for="composer">Komponist</label>
+        <input id="composer" required>
+        <span></span><span></span>
+        <div class="actions">
+          <button class="primary" id="add" type="submit">Zur Bibliothek hinzufügen</button>
+          <span class="facts" id="facts"></span>
+        </div>
+      </form>
+      <p class="note">Bitte prüfen: nur alte Musik (Komponist seit über 70 Jahren tot). Manche Noten sind
+        auf MuseScore fälschlich als gemeinfrei markiert, z. B. Film- oder Popmusik, die gehören nicht
+        auf die öffentliche Seite.</p>
+      <div id="status"></div>
+    </div>
+    <div class="score-box" id="score-box" hidden><div id="score"></div></div>
+  </section>
+</main>
+
+<script src="../vendor/opensheetmusicdisplay.min.js"></script>
+<script type="module">
+import { ScoreView } from '../js/score-view.js';
+import { estimateDifficulty, DIFFICULTY_LABEL } from '../js/difficulty.js';
+
+const $ = (id) => document.getElementById(id);
+const view = new ScoreView($('score'));
+view.setLayout('page', 0.6);
+let query = '';
+let next = null;
+let selected = null; // { hit, li }
+let loadToken = 0;
+
+$('search-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  query = $('query').value.trim();
+  $('hits').replaceChildren();
+  next = 0;
+  loadMore();
+});
+$('more').addEventListener('click', loadMore);
+
+async function loadMore() {
+  if (next === null || !query) return;
+  $('more').hidden = true;
+  $('hint').hidden = false;
+  $('hint').textContent = 'Suche läuft…';
+  const res = await (await fetch(`/api/search?q=${encodeURIComponent(query)}&start=${next}`)).json();
+  next = res.next;
+  for (const hit of res.hits) $('hits').append(hitItem(hit));
+  const count = $('hits').children.length;
+  $('hint').hidden = count > 0;
+  $('hint').textContent = 'Nichts gefunden. Andere Wörter oder den englischen Titel probieren.';
+  $('more').hidden = next === null;
+}
+
+function hitItem(hit) {
+  const li = document.createElement('li');
+  const title = document.createElement('div');
+  title.className = 'title';
+  title.textContent = hit.title;
+  if (hit.inLibrary) {
+    const badge = document.createElement('span');
+    badge.className = 'badge';
+    badge.textContent = 'in der Bibliothek';
+    title.append(badge);
+  }
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  const rating = Number(hit.n_ratings) ? `★ ${hit.rating} (${hit.n_ratings})` : 'keine Bewertung';
+  meta.textContent = [hit.composer, `${hit.bars} Takte`, rating, `${Number(hit.n_views).toLocaleString('de')} Aufrufe`]
+    .filter(Boolean).join(' · ');
+  li.append(title, meta);
+  li.addEventListener('click', () => select(hit, li));
+  return li;
+}
+
+async function select(hit, li) {
+  selected?.li.classList.remove('selected');
+  selected = { hit, li };
+  li.classList.add('selected');
+  $('no-selection').hidden = true;
+  $('details').hidden = false;
+  $('score-box').hidden = false;
+  $('title').value = cleanTitle(hit.title, hit.composer);
+  $('composer').value = shortComposer(hit.composer);
+  $('tempo').value = '';
+  $('status').textContent = '';
+  $('status').className = '';
+  $('add').disabled = false;
+  $('add').textContent = hit.inLibrary ? 'Erneut hinzufügen (ersetzt)' : 'Zur Bibliothek hinzufügen';
+  $('facts').textContent = '';
+  $('score').classList.add('loading');
+
+  const token = ++loadToken;
+  try {
+    const xml = await (await fetch(`/api/score?mxl=${encodeURIComponent(hit.mxl)}`)).text();
+    const piece = await view.load(xml);
+    if (token !== loadToken) return;
+    view.hideCursor();
+    const difficulty = DIFFICULTY_LABEL[estimateDifficulty(piece)];
+    $('facts').innerHTML = '';
+    $('facts').append(
+      'Schwierigkeit (geschätzt): ', bold(difficulty),
+      ` · ${piece.measureCount} Takte · Tempo in den Noten: `, bold(piece.tempo),
+    );
+  } catch (err) {
+    if (token !== loadToken) return;
+    $('facts').textContent = `Diese Noten lassen sich nicht anzeigen: ${err.message || err}`;
+    $('add').disabled = true;
+  } finally {
+    if (token === loadToken) $('score').classList.remove('loading');
+  }
+}
+
+function bold(text) {
+  const b = document.createElement('b');
+  b.textContent = text;
+  return b;
+}
+
+// "Fur Elise - Ludwig van Beethoven" / "Erik Satie - Gnossienne n1" -> without
+// the composer, which has its own field.
+function cleanTitle(title, composer) {
+  let t = title.replace(/�/g, '');
+  const last = composer.replace(/\(.*?\)|\d{4}.*$/g, '').split(/\s+/).filter((w) => w.length > 2).at(-1);
+  if (last) {
+    const name = last.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const sep = '(?:\\s+[-–|]\\s+|:\\s+)'; // not the dash in "D-Flat"
+    t = t.replace(new RegExp(`${sep}(?:(?!${sep}).)*${name}(?:(?!${sep}).)*$`, 'i'), '')
+      .replace(new RegExp(`^(?:(?!${sep}).)*${name}(?:(?!${sep}).)*${sep}`, 'i'), '');
+  }
+  return t.trim() || title;
+}
+
+// "Ludwig van Beethoven (1770-1827)" -> "L. v. Beethoven", like the other pieces.
+function shortComposer(composer) {
+  const name = composer.replace(/�/g, '').replace(/\(.*?\)|\d{4}.*$/g, '').trim();
+  const parts = name.split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return name;
+  return [...parts.slice(0, -1).map((p) => `${p[0]}.`), parts.at(-1)].join(' ');
+}
+
+$('add-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!selected) return;
+  const { hit, li } = selected;
+  $('add').disabled = true;
+  $('status').className = '';
+  $('status').textContent = 'Wird hinzugefügt und veröffentlicht…';
+  const res = await (await fetch('/api/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mxl: hit.mxl, title: $('title').value, composer: $('composer').value, tempo: $('tempo').value }),
+  })).json();
+  if (res.error) {
+    $('status').className = 'error';
+    $('status').textContent = res.error;
+    $('add').disabled = false;
+    return;
+  }
+  $('status').className = 'ok';
+  $('status').textContent = res.published
+    ? `„${$('title').value}“ ist in der Bibliothek. In etwa einer Minute ist es auf dem iPad (App neu öffnen).`
+    : `„${$('title').value}“ ist in der Bibliothek (nur lokal, nicht veröffentlicht).\n${res.log}`;
+  if (!hit.inLibrary) {
+    hit.inLibrary = true;
+    li.replaceWith(selected.li = hitItem(hit));
+    selected.li.classList.add('selected');
+  }
+});
+</script>
+</body>
+</html>

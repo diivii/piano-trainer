@@ -13,7 +13,8 @@ there (tar -xzf mxl.tar.gz), so the scores are in ../PDMX/mxl/.
                                           in tools/originals.json
                                           (--tempo 60 fixes a wrong first tempo)
 
-Then run tools/make_samples.py to rebuild samples/index.json.
+Then run tools/make_samples.py to rebuild samples/index.json. The search page
+(tools/catalog.py) does search, preview and adding in the browser.
 
 The catalog only keeps scores that are solo piano (every track a piano), have
 no lyrics, are public domain or CC0, and have no license conflict between the
@@ -25,11 +26,11 @@ import csv
 import json
 import re
 import sys
+import unicodedata
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
 
-sys.stdout.reconfigure(encoding='utf-8')  # titles and the star on a Windows console
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT.parent / 'PDMX'
 ORIGINALS = ROOT / 'tools' / 'originals.json'
@@ -63,7 +64,7 @@ def catalog(data):
                 'license': row['license'],
                 'license_url': row['license_url'],
             })
-    rows.sort(key=score, reverse=True)
+    rows.sort(key=popularity, reverse=True)
     with open(data / 'piano-catalog.csv', 'w', encoding='utf-8', newline='') as f:
         writer = csv.DictWriter(f, COLUMNS)
         writer.writeheader()
@@ -71,10 +72,18 @@ def catalog(data):
     print(f'{len(rows)} piano pieces -> {data / "piano-catalog.csv"}')
 
 
-def score(row):
+def popularity(row):
     """Rough popularity: views, with well rated scores first."""
     rating = float(row['rating'] or 0)
     return (int(row['n_ratings'] or 0) > 0 and rating >= 4, int(row['n_views'] or 0))
+
+
+def load_catalog(data):
+    with open(data / 'piano-catalog.csv', encoding='utf-8', newline='') as f:
+        rows = list(csv.DictReader(f))
+    for row in rows:
+        row['text'] = plain(f"{row['title']} {row['composer']}")
+    return rows
 
 
 def plain(text):
@@ -82,28 +91,20 @@ def plain(text):
     return ''.join(c for c in text.lower() if c.isascii())
 
 
-def search(data, words, limit):
+def find(data, rows, words, start=0):
+    """Yields (position, row) of real piano scores matching all words, from rows[start:]."""
     words = [plain(w) for w in words]
-    with open(data / 'piano-catalog.csv', encoding='utf-8', newline='') as f:
-        hits = [r for r in csv.DictReader(f)
-                if all(w in plain(f"{r['title']} {r['composer']}") for w in words)]
-    shown = 0
-    for r in hits:
-        if shown == limit:
-            break
-        if not is_grand_staff(data / r['mxl']):
-            continue
-        shown += 1
-        print(f"{r['mxl']}\n    {r['title']} | {r['composer']} | {r['bars']} Takte, "
-              f"{r['notes_per_bar']} Noten/Takt | {r['rating']}★ ({r['n_ratings']}) | {r['n_views']} Aufrufe")
-    print(f'{len(hits)} Treffer (vor der Prüfung auf Klaviernoten)')
+    for i in range(start, len(rows)):
+        row = rows[i]
+        if all(w in row['text'] for w in words) and is_grand_staff(data / row['mxl']):
+            yield i, row
 
 
 def is_grand_staff(path):
     """One part on two staves: a real piano score, not a melody line."""
     try:
         xml = musicxml_from_mxl(path)
-    except (OSError, KeyError, zipfile.BadZipFile, StopIteration, ElementTree.ParseError):
+    except (OSError, KeyError, zipfile.BadZipFile, StopIteration, ElementTree.ParseError, UnicodeDecodeError):
         return False
     return len(re.findall(r'<score-part[ >]', xml)) == 1 and '<staves>2</staves>' in xml
 
@@ -116,15 +117,29 @@ def musicxml_from_mxl(path):
         return z.read(rootfile).decode('utf-8')
 
 
-def add(data, mxl, piece_id, title, composer, tempo=None):
+def slug(text):
+    """'Prélude e-Moll Nr. 4' -> 'prelude-e-moll-nr-4'"""
+    text = unicodedata.normalize('NFKD', text.replace('ß', 'ss')).encode('ascii', 'ignore').decode()
+    return re.sub(r'[^a-z0-9]+', '-', text.lower()).strip('-')
+
+
+def originals():
+    return json.loads(ORIGINALS.read_text(encoding='utf-8')) if ORIGINALS.exists() else []
+
+
+def add(data, mxl, piece_id, title, composer, tempo=None, row=None):
+    """Copies a catalog score into samples/ and lists it in originals.json.
+    Raises ValueError if it can't be added. Returns the file name."""
     if not re.fullmatch(r'[a-z0-9-]+', piece_id):
-        sys.exit('--id: only a-z, 0-9 and -')
-    with open(data / 'piano-catalog.csv', encoding='utf-8', newline='') as f:
-        row = next((r for r in csv.DictReader(f) if r['mxl'] == mxl), None)
+        raise ValueError('id: only a-z, 0-9 and -')
+    if not title.strip() or not composer.strip():
+        raise ValueError('title and composer are needed')
+    if row is None:
+        row = next((r for r in load_catalog(data) if r['mxl'] == mxl), None)
     if not row:
-        sys.exit(f'{mxl} is not in the piano catalog (not free, or not solo piano)')
+        raise ValueError(f'{mxl} is not in the piano catalog (not free, or not solo piano)')
     if not is_grand_staff(data / mxl):
-        sys.exit(f'{mxl} is not a two-staff piano score')
+        raise ValueError(f'{mxl} is not a two-staff piano score')
     xml = musicxml_from_mxl(data / mxl)
     if tempo:  # some scores start with a wrong tempo; the app shows the first one
         xml = re.sub(r'(<sound tempo=")[^"]*', lambda m: m.group(1) + str(tempo), xml, count=1)
@@ -132,34 +147,43 @@ def add(data, mxl, piece_id, title, composer, tempo=None):
     file = f'{piece_id}.musicxml'
     (ROOT / 'samples' / file).write_text(xml, encoding='utf-8')
 
-    originals = json.loads(ORIGINALS.read_text(encoding='utf-8')) if ORIGINALS.exists() else []
-    originals = [o for o in originals if o['id'] != piece_id]
-    originals.append({
-        'id': piece_id, 'file': file, 'title': title, 'composer': composer,
+    listed = [o for o in originals() if o['id'] != piece_id]
+    listed.append({
+        'id': piece_id, 'file': file, 'title': title.strip(), 'composer': composer.strip(),
         'source': f"PDMX {mxl} ({row['title']})", 'license': row['license_url'],
     })
-    ORIGINALS.write_text(json.dumps(originals, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
-    print(f'wrote samples/{file} ({len(xml) // 1024} KB); now run tools/make_samples.py')
+    ORIGINALS.write_text(json.dumps(listed, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+    return file
 
 
-parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-parser.add_argument('--data', type=Path, default=DATA, help='PDMX folder (default: ../PDMX)')
-sub = parser.add_subparsers(dest='command', required=True)
-sub.add_parser('catalog')
-p = sub.add_parser('search')
-p.add_argument('words', nargs='+')
-p.add_argument('--limit', type=int, default=15)
-p = sub.add_parser('add')
-p.add_argument('mxl')
-p.add_argument('--id', required=True)
-p.add_argument('--title', required=True)
-p.add_argument('--composer', required=True)
-p.add_argument('--tempo', type=int, help='replace the first tempo of the score (BPM)')
-args = parser.parse_args()
+if __name__ == '__main__':
+    sys.stdout.reconfigure(encoding='utf-8')  # titles and the star on a Windows console
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('--data', type=Path, default=DATA, help='PDMX folder (default: ../PDMX)')
+    sub = parser.add_subparsers(dest='command', required=True)
+    sub.add_parser('catalog')
+    p = sub.add_parser('search')
+    p.add_argument('words', nargs='+')
+    p.add_argument('--limit', type=int, default=15)
+    p = sub.add_parser('add')
+    p.add_argument('mxl')
+    p.add_argument('--id', required=True)
+    p.add_argument('--title', required=True)
+    p.add_argument('--composer', required=True)
+    p.add_argument('--tempo', type=int, help='replace the first tempo of the score (BPM)')
+    args = parser.parse_args()
 
-if args.command == 'catalog':
-    catalog(args.data)
-elif args.command == 'search':
-    search(args.data, args.words, args.limit)
-else:
-    add(args.data, args.mxl, args.id, args.title, args.composer, args.tempo)
+    if args.command == 'catalog':
+        catalog(args.data)
+    elif args.command == 'search':
+        for shown, (_, r) in enumerate(find(args.data, load_catalog(args.data), args.words)):
+            if shown == args.limit:
+                break
+            print(f"{r['mxl']}\n    {r['title']} | {r['composer']} | {r['bars']} Takte, "
+                  f"{r['notes_per_bar']} Noten/Takt | {r['rating']}★ ({r['n_ratings']}) | {r['n_views']} Aufrufe")
+    else:
+        try:
+            file = add(args.data, args.mxl, args.id, args.title, args.composer, args.tempo)
+        except ValueError as err:
+            sys.exit(str(err))
+        print(f'wrote samples/{file}; now run tools/make_samples.py')

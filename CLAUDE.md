@@ -49,6 +49,10 @@ the project and where it stands.
   public domain/CC0 without license conflict; `add` copies one into `samples/`
   and `tools/originals.json`, then re-run `make_samples.py`. PDMX titles often
   have broken umlauts; give German titles with `--title`.
+- The user adds pieces themselves with the search page (`start-katalog.cmd`,
+  `tools/catalog.py` on port 8020; 8002 is taken by another program on this PC).
+  Adding commits only that piece's files and pushes. Test with `--no-push`
+  (launch config `catalog-no-push`) and undo test additions with git.
 
 ## Current status (2026-10-20)
 

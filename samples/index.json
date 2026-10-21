@@ -90,6 +90,36 @@
     "composer": "E. Grieg (vereinfacht)"
   },
   {
+    "id": "sample-wiegenlied",
+    "file": "wiegenlied.musicxml",
+    "title": "Wiegenlied (Guten Abend, gut' Nacht)",
+    "composer": "J. Brahms (einfache Bearbeitung)"
+  },
+  {
+    "id": "sample-largo-neue-welt",
+    "file": "largo-neue-welt.musicxml",
+    "title": "Largo (Aus der Neuen Welt)",
+    "composer": "A. Dvořák (einfache Bearbeitung)"
+  },
+  {
+    "id": "sample-morgenstimmung",
+    "file": "morgenstimmung.musicxml",
+    "title": "Morgenstimmung",
+    "composer": "E. Grieg (einfache Bearbeitung)"
+  },
+  {
+    "id": "sample-kleine-nachtmusik",
+    "file": "kleine-nachtmusik.musicxml",
+    "title": "Eine kleine Nachtmusik (Anfang)",
+    "composer": "W. A. Mozart (einfache Bearbeitung)"
+  },
+  {
+    "id": "sample-sonate-kv545",
+    "file": "sonate-kv545.musicxml",
+    "title": "Sonate C-Dur KV 545 (Anfang)",
+    "composer": "W. A. Mozart (vereinfacht)"
+  },
+  {
     "id": "sample-praeludium-c-dur",
     "file": "praeludium-c-dur.musicxml",
     "title": "Präludium in C-Dur (Anfang)",
@@ -100,5 +130,89 @@
     "file": "fuer-elise.musicxml",
     "title": "Für Elise (Anfang)",
     "composer": "L. v. Beethoven (vereinfacht)"
+  },
+  {
+    "id": "sample-praeludium-bwv846",
+    "file": "praeludium-bwv846.musicxml",
+    "title": "Präludium C-Dur BWV 846",
+    "composer": "J. S. Bach"
+  },
+  {
+    "id": "sample-fuer-elise-original",
+    "file": "fuer-elise-original.musicxml",
+    "title": "Für Elise",
+    "composer": "L. v. Beethoven"
+  },
+  {
+    "id": "sample-menuett-g-original",
+    "file": "menuett-g-original.musicxml",
+    "title": "Menuett G-Dur BWV Anh. 114",
+    "composer": "C. Petzold"
+  },
+  {
+    "id": "sample-menuett-g-moll",
+    "file": "menuett-g-moll.musicxml",
+    "title": "Menuett g-Moll BWV Anh. 115",
+    "composer": "C. Petzold"
+  },
+  {
+    "id": "sample-sonate-kv545-original",
+    "file": "sonate-kv545-original.musicxml",
+    "title": "Sonate C-Dur KV 545, 1. Satz",
+    "composer": "W. A. Mozart"
+  },
+  {
+    "id": "sample-clementi-sonatine",
+    "file": "clementi-sonatine.musicxml",
+    "title": "Sonatine C-Dur op. 36 Nr. 1",
+    "composer": "M. Clementi"
+  },
+  {
+    "id": "sample-froehlicher-landmann",
+    "file": "froehlicher-landmann.musicxml",
+    "title": "Fröhlicher Landmann",
+    "composer": "R. Schumann"
+  },
+  {
+    "id": "sample-schumann-melodie",
+    "file": "schumann-melodie.musicxml",
+    "title": "Melodie (Album für die Jugend)",
+    "composer": "R. Schumann"
+  },
+  {
+    "id": "sample-chopin-prelude-4",
+    "file": "chopin-prelude-4.musicxml",
+    "title": "Prélude e-Moll op. 28 Nr. 4",
+    "composer": "F. Chopin"
+  },
+  {
+    "id": "sample-chopin-prelude-7",
+    "file": "chopin-prelude-7.musicxml",
+    "title": "Prélude A-Dur op. 28 Nr. 7",
+    "composer": "F. Chopin"
+  },
+  {
+    "id": "sample-musette-d-dur",
+    "file": "musette-d-dur.musicxml",
+    "title": "Musette D-Dur",
+    "composer": "Notenbüchlein für A. M. Bach"
+  },
+  {
+    "id": "sample-gnossienne-1",
+    "file": "gnossienne-1.musicxml",
+    "title": "Gnossienne Nr. 1",
+    "composer": "E. Satie"
+  },
+  {
+    "id": "sample-arabesque",
+    "file": "arabesque.musicxml",
+    "title": "Arabesque op. 100 Nr. 2",
+    "composer": "F. Burgmüller"
+  },
+  {
+    "id": "sample-mondscheinsonate",
+    "file": "mondscheinsonate.musicxml",
+    "title": "Mondscheinsonate, 1. Satz",
+    "composer": "L. v. Beethoven"
   }
 ]

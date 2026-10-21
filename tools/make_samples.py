@@ -10,6 +10,10 @@ Notation per bar: space-separated "pitch:duration" tokens.
             q. = dotted quarter, h = half, h. = dotted half, w = whole
 Pickups (upbeats) are written as a full first bar starting with rests.
 
+Original scores taken from PDMX by tools/pdmx.py are listed in
+tools/originals.json; their files in samples/ are not generated here, only
+added to the index.
+
 Run: python tools/make_samples.py
 """
 import json
@@ -203,6 +207,53 @@ PIECES = [
                'A2:q E3:q A2:q E3:q', 'B2:q F#3:q Bb2:q F3:q', 'A2:q E3:q A2:q E3:q', 'E2:q B2:q A2:h'],
     },
     {
+        'id': 'wiegenlied',
+        'title': "Wiegenlied (Guten Abend, gut' Nacht)",
+        'composer': 'J. Brahms (einfache Bearbeitung)',
+        'time': (3, 4), 'key': 0, 'tempo': 80,
+        'rh': ['r:h E4:e E4:e', 'G4:h E4:e E4:e', 'G4:h E4:e G4:e', 'C5:q B4:q. A4:e', 'A4:q G4:q D4:e E4:e',
+               'F4:q D4:q D4:e E4:e', 'F4:h D4:e F4:e', 'B4:e A4:e G4:q B4:q', 'C5:h.'],
+        'lh': ['r:h.', f'{C}:h.', f'{C}:h.', 'G2+F3:h.', f'{C}:h.', f'{G}:h.', 'G2+F3:h.', f'{G}:h.', f'{C}:h.'],
+    },
+    {
+        'id': 'largo-neue-welt',
+        'title': 'Largo (Aus der Neuen Welt)',
+        'composer': 'A. Dvořák (einfache Bearbeitung)',
+        'time': (4, 4), 'key': 0, 'tempo': 60,
+        'rh': ['E4:q. G4:e G4:h', 'E4:q. D4:e C4:h', 'D4:q E4:q G4:q E4:q', 'D4:w',
+               'E4:q. G4:e G4:h', 'E4:q. D4:e C4:h', 'D4:q E4:q D4:h', 'C4:w'],
+        'lh': [f'{C}:w', f'{C}:w', f'{F}:h {C}:h', f'{G}:w', f'{C}:w', f'{C}:w', f'{G}:w', f'{C}:w'],
+    },
+    {
+        'id': 'morgenstimmung',
+        'title': 'Morgenstimmung',
+        'composer': 'E. Grieg (einfache Bearbeitung)',
+        'time': (6, 8), 'key': 0, 'tempo': 120,
+        'rh': ['G4:q E4:e D4:q C4:e', 'D4:q E4:e G4:q E4:e', 'D4:q C4:e D4:q E4:e', 'D4:q E4:e G4:q E4:e',
+               'G4:q A4:e E4:q A4:e', 'G4:q E4:e D4:q C4:e', 'C4:h.'],
+        'lh': [f'{C}:h.', f'{C}:h.', f'{C}:h.', f'{C}:h.', f'{F}:h.', f'{G}:h.', f'{C}:h.'],
+    },
+    {
+        'id': 'kleine-nachtmusik',
+        'title': 'Eine kleine Nachtmusik (Anfang)',
+        'composer': 'W. A. Mozart (einfache Bearbeitung)',
+        'time': (4, 4), 'key': 1, 'tempo': 110,
+        'rh': ['G4:q r:e D4:e G4:q r:e D4:e', 'G4:e D4:e G4:e B4:e D5:q r:q',
+               'C5:q r:e A4:e C5:q r:e A4:e', 'C5:e A4:e F#4:e A4:e D4:q r:q'] * 2,
+        'lh': [f'{G}:w', f'{G}:w', 'D3+A3:w', 'D3+A3:h D3:h'] * 2,
+    },
+    {
+        'id': 'sonate-kv545',
+        'title': 'Sonate C-Dur KV 545 (Anfang)',
+        'composer': 'W. A. Mozart (vereinfacht)',
+        'time': (4, 4), 'key': 0, 'tempo': 90,
+        'rh': ['C5:h E5:q G5:q', 'B4:q. C5:s D5:s C5:h', 'A5:h G5:q C6:q', 'G5:q F5:e E5:e F5:q E5:q',
+               'A4:e B4:e C5:e D5:e E5:e F5:e G5:e A5:e', 'G5:e F5:e E5:e D5:e C5:e B4:e A4:e G4:e',
+               'F4:e G4:e A4:e B4:e C5:e D5:e E5:e F5:e', 'E5:e D5:e C5:e B4:e C5:h'],
+        'lh': ['C3+E3+G3:w', 'D3+F3+G3:h C3+E3+G3:h', 'C3+F3+A3:h C3+E3+G3:h', 'B2+D3+G3:h C3+E3+G3:h',
+               f'{F}:w', f'{C}:w', f'{G}:w', 'G2+F3:h C3+E3+G3:h'],
+    },
+    {
         'id': 'praeludium-c-dur',
         'title': 'Präludium in C-Dur (Anfang)',
         'composer': 'J. S. Bach (vereinfacht)',
@@ -318,6 +369,13 @@ for piece in PIECES:
     (out_dir / file).write_text(piece_xml(piece), encoding='utf-8')
     index.append({'id': f"sample-{piece['id']}", 'file': file, 'title': piece['title'], 'composer': piece['composer']})
     print(f"wrote {file} ({len(piece['rh'])} bars)")
+
+originals = Path(__file__).resolve().parent / 'originals.json'
+for piece in json.loads(originals.read_text(encoding='utf-8')) if originals.exists() else []:
+    if not (out_dir / piece['file']).exists():
+        raise SystemExit(f"{piece['file']} is missing (see tools/pdmx.py)")
+    index.append({'id': f"sample-{piece['id']}", 'file': piece['file'], 'title': piece['title'], 'composer': piece['composer']})
+    print(f"listed {piece['file']} (original from PDMX)")
 
 (out_dir / 'index.json').write_text(json.dumps(index, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 print('wrote index.json')

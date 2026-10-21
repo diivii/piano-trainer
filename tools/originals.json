@@ -1,0 +1,114 @@
+[
+  {
+    "id": "praeludium-bwv846",
+    "file": "praeludium-bwv846.musicxml",
+    "title": "Präludium C-Dur BWV 846",
+    "composer": "J. S. Bach",
+    "source": "PDMX ./mxl/1/24/QmbHzrXuDGNG3HyzLpeBNeZ9wAj4bTDGWsZ5xz56abM8D8.mxl (Prelude I in C major BWV 846 - Well Tempered Clavier [First Book])",
+    "license": "https://creativecommons.org/publicdomain/mark/1.0/"
+  },
+  {
+    "id": "fuer-elise-original",
+    "file": "fuer-elise-original.musicxml",
+    "title": "Für Elise",
+    "composer": "L. v. Beethoven",
+    "source": "PDMX ./mxl/3/53/QmdXWkWbF5xQQnBwYR2LFiiSDjY7kWswUocDNAwKbeviFe.mxl (Für Elise / Bagatelle für Klavier (a-Moll) WoO 59)",
+    "license": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  {
+    "id": "menuett-g-original",
+    "file": "menuett-g-original.musicxml",
+    "title": "Menuett G-Dur BWV Anh. 114",
+    "composer": "C. Petzold",
+    "source": "PDMX ./mxl/13/4/QmV5AjjwA5gs7PmGEXAGwSj7QZfWQE9kNe8xAr67EkUo1J.mxl (Christian Petzold - Minuet in G Major BWV Anh. 114)",
+    "license": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  {
+    "id": "menuett-g-moll",
+    "file": "menuett-g-moll.musicxml",
+    "title": "Menuett g-Moll BWV Anh. 115",
+    "composer": "C. Petzold",
+    "source": "PDMX ./mxl/9/35/QmRoSjGbegnLzhnjX4MbD1FdbMbMdJK8VBtYLtCYodwryU.mxl (Christian Petzold - Minuet in G Minor BWV Anh. 115)",
+    "license": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  {
+    "id": "sonate-kv545-original",
+    "file": "sonate-kv545-original.musicxml",
+    "title": "Sonate C-Dur KV 545, 1. Satz",
+    "composer": "W. A. Mozart",
+    "source": "PDMX ./mxl/0/42/Qmas87p3CricUGpNozvLiZYcc1CFGAXGr7QhREAqmmXoG8.mxl (Sonata No 16 KV 545 'Facile' Mozart)",
+    "license": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  {
+    "id": "clementi-sonatine",
+    "file": "clementi-sonatine.musicxml",
+    "title": "Sonatine C-Dur op. 36 Nr. 1",
+    "composer": "M. Clementi",
+    "source": "PDMX ./mxl/12/4/QmU5Dv5TxAi9SEpv5i6yRvB6BShwQ5oo6L3EoDcjFDdRbR.mxl (Sonate en UT Majeur - Muzio CLEMENTI)",
+    "license": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  {
+    "id": "froehlicher-landmann",
+    "file": "froehlicher-landmann.musicxml",
+    "title": "Fröhlicher Landmann",
+    "composer": "R. Schumann",
+    "source": "PDMX ./mxl/12/26/QmUjLViyrL4YTakw284DWbAKEBJKtWED9F8aQJYfpGm4hW.mxl (The happy farmer)",
+    "license": "https://creativecommons.org/publicdomain/mark/1.0/"
+  },
+  {
+    "id": "schumann-melodie",
+    "file": "schumann-melodie.musicxml",
+    "title": "Melodie (Album für die Jugend)",
+    "composer": "R. Schumann",
+    "source": "PDMX ./mxl/8/36/QmQpYnSgWdZyuqx7dsdwh9DQo7or7f1agVLjqsoK6UyNfo.mxl (Schumann - Album for the Young Op. 68 No. 1 Melody)",
+    "license": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  {
+    "id": "chopin-prelude-4",
+    "file": "chopin-prelude-4.musicxml",
+    "title": "Prélude e-Moll op. 28 Nr. 4",
+    "composer": "F. Chopin",
+    "source": "PDMX ./mxl/0/33/QmanzCS7875c3wuXfewZKx3qARMdn6GvcwJfQ15QGmxQ6n.mxl (Frédéric Chopin: Prelude in E minor Op.28 No.4)",
+    "license": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  {
+    "id": "chopin-prelude-7",
+    "file": "chopin-prelude-7.musicxml",
+    "title": "Prélude A-Dur op. 28 Nr. 7",
+    "composer": "F. Chopin",
+    "source": "PDMX ./mxl/9/37/QmRP9W9te4eDqVnrabcdgvNuQAkT1A8w2RrAdjJjGuARwd.mxl (Frédéric Chopin: Prelude in A major Op.28 No.7)",
+    "license": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  {
+    "id": "musette-d-dur",
+    "file": "musette-d-dur.musicxml",
+    "title": "Musette D-Dur",
+    "composer": "Notenbüchlein für A. M. Bach",
+    "source": "PDMX ./mxl/1/11/QmbbBkZNFiBXmKSmZGk5xbNuAYXph1Tto1w4zkqf4pPBoD.mxl (Musette in D Major)",
+    "license": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  {
+    "id": "gnossienne-1",
+    "file": "gnossienne-1.musicxml",
+    "title": "Gnossienne Nr. 1",
+    "composer": "E. Satie",
+    "source": "PDMX ./mxl/3/49/QmdV4EjTYTsxUQ5av9jmmFj7Yes4a9oHVCmYQo5YsUyRyt.mxl (Erik Satie - Gnossienne n1)",
+    "license": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  {
+    "id": "arabesque",
+    "file": "arabesque.musicxml",
+    "title": "Arabesque op. 100 Nr. 2",
+    "composer": "F. Burgmüller",
+    "source": "PDMX ./mxl/17/19/QmZfHayYiHJJBpxa5yZpMwR9RDMcDRYGvFC25NyyKa8ziH.mxl (Burgmüller: Arabesque - Op. 100 No. 2)",
+    "license": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  {
+    "id": "mondscheinsonate",
+    "file": "mondscheinsonate.musicxml",
+    "title": "Mondscheinsonate, 1. Satz",
+    "composer": "L. v. Beethoven",
+    "source": "PDMX ./mxl/4/46/QmeuK3Unr7ybzDCvVVbU4Eu878nUjDhRJpZMyzzMY5EQyr.mxl (Moonlight Sonata 1st movement)",
+    "license": "https://creativecommons.org/publicdomain/zero/1.0/"
+  }
+]

@@ -10,7 +10,7 @@ import { renderLibrary } from './library-view.js';
 import { saveBackup, restoreBackup, lastBackup } from './backup.js';
 import * as storage from './storage.js';
 import { runPoints, repeatFactor, levelInfo, stars, starText } from './levels.js';
-import { DIFFICULTIES, estimateDifficulty } from './difficulty.js';
+import { DIFFICULTIES, RATING_VERSION, estimateDifficulty } from './difficulty.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -405,14 +405,14 @@ $('backup-paste').addEventListener('click', async () => {
   }
 });
 
-// Pieces without a difficulty (new imports, samples, pieces from before this
-// existed) are rated in the background with a hidden score view, then the
+// Pieces without a current rating (new imports, samples, or rated before
+// RATING_VERSION changed; not ones set by hand) are rated in the background with a hidden score view, then the
 // library is shown again with them in their section.
 let rating = null;
 const unrateable = new Set(); // failed to load; don't retry every time
 
 function rateNewPieces(pieces) {
-  const todo = pieces.filter((p) => !p.difficulty && !unrateable.has(p.id));
+  const todo = pieces.filter((p) => !p.difficultyManual && p.difficultyVersion !== RATING_VERSION && !unrateable.has(p.id));
   if (!todo.length || rating) return;
   rating = (async () => {
     const box = document.createElement('div');
@@ -425,7 +425,7 @@ function rateNewPieces(pieces) {
         const difficulty = estimateDifficulty(await view.load(p.content));
         // Re-read: the piece may have changed or been deleted meanwhile.
         const stored = await storage.getPiece(p.id);
-        if (stored && !stored.difficulty) await storage.savePiece({ ...stored, difficulty });
+        if (stored && !stored.difficultyManual) await storage.savePiece({ ...stored, difficulty, difficultyVersion: RATING_VERSION });
       } catch {
         unrateable.add(p.id);
       }

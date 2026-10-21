@@ -42,6 +42,13 @@ the project and where it stands.
   re-run it rather than editing `samples/*.musicxml` by hand. Only public-domain
   music (the site is public): no Joe Hisaishi, film or pop songs. The user can
   import such pieces themselves; they stay private on the device.
+- Original scores come from PDMX, unpacked in `../PDMX` (next to the project,
+  PDMX.csv, mxl.tar.gz and the unpacked mxl/, not in git; the user wants to
+  keep it as a catalog for later).
+  `python -X utf8 -I tools/pdmx.py search <words>` finds solo piano scores marked
+  public domain/CC0 without license conflict; `add` copies one into `samples/`
+  and `tools/originals.json`, then re-run `make_samples.py`. PDMX titles often
+  have broken umlauts; give German titles with `--title`.
 
 ## Current status (2026-10-20)
 
@@ -97,6 +104,12 @@ All built on 2026-10-19:
   `pageScale`). `ScoreView.follow()` eases towards the cursor itself (rAF) instead
   of native smooth scrolling. Also fixed `#app` not passing the full height on,
   which had kept the score area at its 200 px minimum.
+- Done (2026-10-21): 19 new samples (36 total): 5 arrangements (Wiegenlied, Largo,
+  Morgenstimmung, Kleine Nachtmusik, KV 545) and 14 PDMX originals, some pairing
+  with an existing arrangement (Für Elise, Präludium, Menuett G, KV 545).
+  Difficulty thresholds recalibrated (0–2 easy, 3–6 medium, 7+ hard; originals
+  score 7–11); `RATING_VERSION` in `difficulty.js` makes stored ratings redo
+  once (manual ones kept). Gymnopédie 1 and Träumerei had no good PDMX piano score.
 - No known TODOs in the code.
 
 ## Ideas / next steps

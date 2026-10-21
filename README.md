@@ -20,9 +20,13 @@ Live: https://diivii.github.io/piano-trainer/
   practiced ones move to the bottom (per person). Each piece
   is rated automatically from its notes (speed, chords, both hands, hand range,
   black keys, length); tap the label on a card to change it
-- **17 built-in pieces** from easy to hard: children's songs (Alle meine Entchen,
-  Hänschen klein, …), Stille Nacht, When the Saints, Kanon in D, Gymnopédie,
-  Für Elise, Bach's Präludium in C and more (all public domain)
+- **36 built-in pieces** from easy to hard (all public domain): 22 simple
+  arrangements (children's songs, Stille Nacht, Kanon in D, Gymnopédie, Für Elise,
+  Bach's Präludium, Mozart KV 545, Eine kleine Nachtmusik, Morgenstimmung, …) and
+  14 original scores (Für Elise, Präludium BWV 846, KV 545, Clementi, Schumann,
+  Chopin, Satie, Burgmüller, Mondscheinsonate, …), some pieces in both versions.
+  The originals come from [PDMX](https://zenodo.org/records/15571083) (Long et al.,
+  CC BY 4.0), a dataset of MuseScore scores marked public domain or CC0
 - **Stars** per piece (1–3) for the best whole-piece run with both hands
   (from 70 %, 85 %, 95 %), on the cards and the results card
 - **Hand colors**: key hints are green for the right hand, orange for the left;
@@ -111,4 +115,6 @@ Locally there's no `version.json` and files load unversioned ("lokal").
 | `vendor/` | Bundled OpenSheetMusicDisplay 2.2.1 (BSD-3 license) |
 | `tools/serve.py` | Local no-cache dev server |
 | `tools/stamp_version.py` | Adds the version to imports and writes `version.json` (used when publishing) |
-| `tools/make_samples.py` | Generates the built-in sample pieces and `samples/index.json` |
+| `tools/make_samples.py` | Generates the built-in arrangements and `samples/index.json` |
+| `tools/pdmx.py` | Piano catalog of a local PDMX copy (`../PDMX`): search it, add scores as samples |
+| `tools/originals.json` | The samples taken from PDMX, with their source file and license |

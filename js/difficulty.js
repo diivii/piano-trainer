@@ -2,9 +2,13 @@
 // score (see score-view.js for the shape). No display code.
 //
 // Each feature adds points (speed up to 3, the rest up to 2); 0–2 points is
-// easy, 3–5 medium, 6+ hard.
+// easy, 3–6 medium, 7+ hard.
 // Calibrated on the built-in samples: children's songs come out easy, simple
-// two-hand arrangements medium, and Für Elise, Bach and Grieg hard.
+// two-hand arrangements (also of Für Elise, Bach, Mozart) medium, and the
+// original scores (7–11 points) hard.
+
+// Bump when the rating changes, so stored ratings are redone (not manual ones).
+export const RATING_VERSION = 2;
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard'];
 export const DIFFICULTY_LABEL = { easy: 'Leicht', medium: 'Mittel', hard: 'Schwer' };
@@ -42,5 +46,5 @@ export function estimateDifficulty(piece) {
     + (handRange <= 12 ? 0 : handRange <= 19 ? 1 : 2)
     + (blackKeys < 0.03 ? 0 : blackKeys < 0.15 ? 1 : 2)
     + (piece.measureCount <= 24 ? 0 : piece.measureCount <= 48 ? 1 : 2);
-  return score <= 2 ? 'easy' : score <= 5 ? 'medium' : 'hard';
+  return score <= 2 ? 'easy' : score <= 6 ? 'medium' : 'hard';
 }

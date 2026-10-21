@@ -82,11 +82,6 @@
           </div>
         </div>
         <div class="popover-row">
-          <span class="popover-label">Noten</span>
-          <button id="zoom-out" class="icon-button" type="button" aria-label="Kleinere Noten">A−</button>
-          <button id="zoom-in" class="icon-button" type="button" aria-label="Größere Noten">A+</button>
-        </div>
-        <div class="popover-row">
           <span class="popover-label">Tastatur</span>
           <div class="segmented" data-setting="keyboard">
             <button type="button" data-value="normal">Normal</button>
@@ -109,6 +104,14 @@
       <div id="section-chip" class="section-chip" hidden></div>
       <div id="message" class="message" hidden></div>
       <div id="results" class="results" hidden></div>
+      <div class="score-controls">
+        <div class="segmented" data-setting="view">
+          <button type="button" data-value="line">Zeile</button>
+          <button type="button" data-value="page">Seite</button>
+        </div>
+        <button id="zoom-out" class="icon-button" type="button" aria-label="Kleinere Noten">A−</button>
+        <button id="zoom-in" class="icon-button" type="button" aria-label="Größere Noten">A+</button>
+      </div>
       <div class="focus-controls">
         <button id="focus-listen" class="icon-button" type="button" aria-label="Anhören">▶</button>
         <button id="focus-restart" class="icon-button" type="button" aria-label="Neustart">↻</button>

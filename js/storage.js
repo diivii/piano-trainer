@@ -167,7 +167,7 @@ export async function requestPersistence() {
 // Per profile. The pre-profile settings key serves as the starting point.
 const OLD_SETTINGS_KEY = 'piano-trainer.settings';
 const settingsKey = (profile) => `${OLD_SETTINGS_KEY}.${profile}`;
-const DEFAULT_SETTINGS = { mode: 'wait', hands: 'both', loop: false, hints: true, tempo: 60, metronome: true, scale: 1, keyboard: 'normal', sound: 'piano' };
+const DEFAULT_SETTINGS = { mode: 'wait', hands: 'both', loop: false, hints: true, tempo: 60, metronome: true, view: 'line', scale: 1, pageScale: 1, keyboard: 'normal', sound: 'piano' };
 
 export function loadSettings(profile = currentProfile().id) {
   try {

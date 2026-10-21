@@ -93,13 +93,14 @@ function syncControls() {
 }
 
 // Settings that only change the display; everything else restarts the run.
-const DISPLAY_ONLY = new Set(['hints', 'scale', 'keyboard', 'sound']);
+const DISPLAY_ONLY = new Set(['hints', 'scale', 'pageScale', 'view', 'keyboard', 'sound']);
 
 function setSetting(key, value) {
   settings[key] = value;
   storage.saveSettings(settings);
   syncControls();
   if (key === 'hints') updateHints();
+  if (key === 'view') applyScoreLayout();
   if (!DISPLAY_ONLY.has(key)) startSession();
 }
 
@@ -220,9 +221,14 @@ $('tempo-down').addEventListener('click', () => setSetting('tempo', clampTempo(s
 $('tempo-up').addEventListener('click', () => setSetting('tempo', clampTempo(settings.tempo + 5)));
 $('zoom-in').addEventListener('click', () => changeZoom(0.1));
 $('zoom-out').addEventListener('click', () => changeZoom(-0.1));
+// Each view keeps its own size: 'scale' for the line, 'pageScale' for the page.
+const scaleKey = () => (settings.view === 'page' ? 'pageScale' : 'scale');
+function applyScoreLayout() {
+  score.setLayout(settings.view, settings[scaleKey()]);
+}
 function changeZoom(delta) {
-  score.setZoom(score.zoom + delta);
-  setSetting('scale', score.zoom);
+  score.setLayout(settings.view, score.scale + delta);
+  setSetting(scaleKey(), score.scale);
 }
 
 $('focus').addEventListener('click', () => document.body.classList.add('focus'));
@@ -1052,7 +1058,7 @@ $('profile').addEventListener('click', async () => {
   Object.assign(settings, storage.loadSettings());
   renderProfile();
   syncControls();
-  score.setZoom(settings.scale);
+  applyScoreLayout();
   const button = $('profile');
   button.classList.remove('bump');
   void button.offsetWidth; // restart the animation
@@ -1079,7 +1085,7 @@ window.pianoTrainer = {
 
 renderProfile();
 syncControls();
-score.setZoom(settings.scale);
+applyScoreLayout();
 midi.connect();
 storage.requestPersistence();
 await ensureSamples();

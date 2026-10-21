@@ -89,11 +89,14 @@ All built on 2026-10-19:
 - Library layout (2026-10-20): three columns by difficulty; within a column
   sorted by the active profile's last practice (never played first), to nudge
   towards other pieces.
-- Done (2026-10-21): the score is one long line (OSMD `renderSingleHorizontalStaffline`)
-  zoomed to fill the height and scrolled so the cursor sits a third from the left
-  (`ScoreView.fit()`/`follow()`). The ＋/− buttons scale on top of that (setting
-  `scale`, replacing the old `zoom`). Also fixed `#app` not passing the full height
-  on, which had kept the score area at its 200 px minimum.
+- Done (2026-10-21): two score views, switched with "Zeile | Seite" on the score
+  (setting `view`, per profile). Line: one long line (OSMD
+  `renderSingleHorizontalStaffline`) zoomed to 65% of the height, cursor a third
+  from the left. Page: wrapped lines, the cursor's line kept near the top so the
+  next lines show. A−/A+ sit next to the switch; sizes per view (`scale`,
+  `pageScale`). `ScoreView.follow()` eases towards the cursor itself (rAF) instead
+  of native smooth scrolling. Also fixed `#app` not passing the full height on,
+  which had kept the score area at its 200 px minimum.
 - No known TODOs in the code.
 
 ## Ideas / next steps

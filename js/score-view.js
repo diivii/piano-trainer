@@ -20,7 +20,7 @@ export class ScoreView {
   constructor(container) {
     this.container = container;
     this.osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(container, {
-      autoResize: false, // single line: only the height matters, see the ResizeObserver
+      autoResize: false, // handled by the ResizeObserver below
       backend: 'svg',
       drawTitle: false,
       drawComposer: false,
@@ -28,7 +28,10 @@ export class ScoreView {
       followCursor: false, // scrolled by follow()
       renderSingleHorizontalStaffline: true,
     });
-    this.scale = 1; // user zoom on top of fitting the line to the height
+    // 'line': the whole piece as one line that scrolls sideways, zoomed to the
+    // height (times scale). 'page': wrapped lines, scrolling down; zoom = scale.
+    this.view = 'line';
+    this.scale = 1;
     this.steps = [];
     this.stepNotes = []; // step index -> OSMD notes, parallel to step.notes
     this.colors = new Map(); // step index -> [color per note]
@@ -43,37 +46,103 @@ export class ScoreView {
       this.afterRender();
     };
 
-    // The whole piece is one long line that scrolls sideways; it is zoomed so
-    // the line fills the height (focus mode and keyboard size change it).
-    // Watches the parent: its size doesn't depend on the score's scrollbars.
-    let lastHeight = 0;
+    // Line view refits when the height changes (focus mode, keyboard size),
+    // page view re-wraps when the width changes. Watches the parent: its size
+    // doesn't depend on the score's scrollbars.
+    let last = { width: 0, height: 0 };
     new ResizeObserver(() => requestAnimationFrame(() => {
-      const height = this.container.clientHeight;
-      if (height === lastHeight) return this.follow(false);
-      lastHeight = height;
-      if (this.steps.length) this.fit();
+      const size = { width: this.container.clientWidth, height: this.container.clientHeight };
+      const changed = this.view === 'line' ? size.height !== last.height : size.width !== last.width;
+      last = size;
+      if (changed && this.steps.length) this.layout();
+      else this.follow(false);
     })).observe(container.parentElement);
+
+    // Smooth scrolling towards the cursor; a touch on the score hands over to the finger.
+    this.scrollTarget = null;
+    for (const type of ['pointerdown', 'wheel']) {
+      container.addEventListener(type, () => (this.scrollTarget = null), { passive: true });
+    }
   }
 
-  // Zoom so the staff line fills the container's height (times this.scale).
-  fit() {
+  setLayout(view, scale) {
+    const [min, max] = view === 'line' ? [0.5, 1.5] : [0.5, 2];
+    scale = Math.round(Math.min(max, Math.max(min, scale)) * 10) / 10;
+    if (view === this.view && scale === this.scale) return;
+    const viewChanged = view !== this.view;
+    this.view = view;
+    this.scale = scale;
+    if (viewChanged) {
+      this.osmd.setOptions({ renderSingleHorizontalStaffline: view === 'line' });
+      this.container.classList.toggle('page-view', view === 'page');
+    }
+    if (this.steps.length) this.layout(viewChanged);
+  }
+
+  // viewChanged: the drawn SVG is still the other view, so it can't be measured.
+  layout(viewChanged = false) {
+    if (this.view === 'page') {
+      this.osmd.zoom = this.scale;
+      this.osmd.render();
+    } else {
+      if (viewChanged) this.osmd.render();
+      this.fit(true);
+    }
+    this.follow(false);
+  }
+
+  // Line view: zoom so the staff line fills part of the height (times this.scale).
+  fit(force = false) {
     const svg = this.container.querySelector('svg');
     const height = this.container.clientHeight;
     const drawn = parseFloat(svg?.getAttribute('height'));
     if (!height || !drawn) return; // hidden (e.g. the background difficulty rating)
-    const zoom = Math.min(5, Math.max(0.4, ((height * 0.92) / (drawn / this.osmd.zoom)) * this.scale));
-    if (Math.abs(zoom - this.osmd.zoom) / this.osmd.zoom < 0.02) return;
+    const zoom = Math.min(5, Math.max(0.4, ((height * 0.65) / (drawn / this.osmd.zoom)) * this.scale));
+    if (!force && Math.abs(zoom - this.osmd.zoom) / this.osmd.zoom < 0.02) return;
     this.osmd.zoom = zoom;
     this.osmd.render();
   }
 
-  // Keep the cursor about a third from the left, so the next bars are visible.
+  // Line view: cursor about a third from the left, so the next bars are visible.
+  // Page view: the cursor's line near the top, so the lines below are visible.
   follow(smooth = true) {
     const el = this.osmd.cursor?.cursorElement;
     if (!el || el.style.display === 'none') return;
-    const x = el.getBoundingClientRect().left - this.container.getBoundingClientRect().left + this.container.scrollLeft;
-    const left = Math.max(0, x - this.container.clientWidth * 0.3);
-    this.container.scrollTo({ left, behavior: smooth ? 'smooth' : 'auto' });
+    const c = this.container;
+    const box = c.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    const target = this.view === 'line'
+      ? { left: r.left - box.left + c.scrollLeft - c.clientWidth * 0.3, top: c.scrollTop }
+      : { left: 0, top: r.top - box.top + c.scrollTop - c.clientHeight * 0.08 };
+    target.left = Math.min(c.scrollWidth - c.clientWidth, Math.max(0, target.left));
+    target.top = Math.min(c.scrollHeight - c.clientHeight, Math.max(0, target.top));
+    if (!smooth) {
+      this.scrollTarget = null;
+      c.scrollLeft = target.left;
+      c.scrollTop = target.top;
+      return;
+    }
+    const running = this.scrollTarget;
+    this.scrollTarget = target;
+    if (running) return;
+    // Eases towards the latest target, so quick steps blend into one gliding motion.
+    let pos = { left: c.scrollLeft, top: c.scrollTop };
+    let then = performance.now();
+    const frame = (now) => {
+      const t = this.scrollTarget;
+      if (!t) return;
+      const k = 1 - Math.exp(-Math.min(64, now - then) / 260);
+      then = now;
+      pos = { left: pos.left + (t.left - pos.left) * k, top: pos.top + (t.top - pos.top) * k };
+      if (Math.abs(t.left - pos.left) < 0.5 && Math.abs(t.top - pos.top) < 0.5) {
+        pos = t;
+        this.scrollTarget = null;
+      }
+      c.scrollLeft = pos.left;
+      c.scrollTop = pos.top;
+      if (this.scrollTarget) requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
   }
 
   // content: MusicXML text, or the binary string of a compressed .mxl file.
@@ -82,10 +151,11 @@ export class ScoreView {
     this.section = null;
     this.steps = [];
     await this.osmd.load(content);
+    if (this.view === 'page') this.osmd.zoom = this.scale;
     this.osmd.render();
     this.osmd.cursor.show();
     this.steps = this.extractSteps();
-    this.fit();
+    if (this.view === 'line') this.fit();
     this.moveTo(0);
     this.follow(false);
     const sheet = this.osmd.Sheet;
@@ -157,15 +227,6 @@ export class ScoreView {
 
   hideCursor() {
     this.osmd.cursor.hide();
-  }
-
-  get zoom() {
-    return this.scale;
-  }
-
-  setZoom(zoom) {
-    this.scale = Math.round(Math.min(1.5, Math.max(0.5, zoom)) * 10) / 10;
-    if (this.steps.length) this.fit();
   }
 
   afterRender() {

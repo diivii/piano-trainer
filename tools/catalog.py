@@ -5,6 +5,10 @@ Adding writes the score to samples/, rebuilds samples/index.json, commits just
 those files and pushes, so the piece shows up on the live site (and the iPad)
 a minute later. Only reachable from this computer.
 
+"Privat hochladen" instead saves the score into the clone of the private
+pieces repo next to the project (../piano-pieces) and pushes it there; the app
+imports it on the iPad when it next opens (js/repo-sync.js).
+
 Run: python tools/catalog.py [--no-push]   (or start-katalog.cmd)
      then open http://localhost:8020
 """
@@ -31,6 +35,8 @@ parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.R
 parser.add_argument('--data', type=Path, default=pdmx.DATA, help='PDMX folder (default: ../PDMX)')
 parser.add_argument('--no-push', action='store_true', help='add pieces without committing and pushing')
 parser.add_argument('--port', type=int, default=PORT)
+parser.add_argument('--private', type=Path, default=ROOT.parent / 'piano-pieces',
+                    help='clone of the private pieces repo (default: ../piano-pieces)')
 args = parser.parse_args()
 
 print('Loading the catalog…')
@@ -58,8 +64,8 @@ def search(query, start):
     return {'hits': hits, 'next': next_start}
 
 
-def run(*command):
-    done = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, encoding='utf-8')
+def run(*command, cwd=ROOT):
+    done = subprocess.run(command, cwd=cwd, capture_output=True, text=True, encoding='utf-8')
     output = (done.stdout + done.stderr).strip()
     if done.returncode:
         raise RuntimeError(f"{' '.join(command[:2])} failed:\n{output}")
@@ -99,6 +105,26 @@ def add(body):
     return {'ok': True, 'file': file, 'log': '\n'.join(log), 'published': not args.no_push}
 
 
+def add_private(body):
+    """Saves a score (already retitled by the page) to the private repo and pushes it."""
+    title, xml = body.get('title', '').strip(), body.get('xml', '')
+    if not title:
+        raise ValueError('Bitte einen Titel eingeben.')
+    if not (args.private / '.git').is_dir():
+        raise ValueError(f'Privates Repo nicht gefunden: {args.private}')
+    # Same title again replaces the file; the app then updates the piece in place.
+    name = ' '.join(re.sub(r'[\\/:*?"<>|]+', ' ', title).split()) + '.musicxml'
+    with adding:
+        (args.private / name).write_text(xml, encoding='utf-8')
+        if args.no_push:
+            return {'ok': True, 'file': name, 'published': False}
+        run('git', 'add', '--', name, cwd=args.private)
+        if run('git', 'status', '--porcelain', '--', name, cwd=args.private):
+            run('git', 'commit', '-m', f'Add {title}', '--', name, cwd=args.private)
+            run('git', 'push', cwd=args.private)
+    return {'ok': True, 'file': name, 'published': True}
+
+
 class Handler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store')
@@ -135,11 +161,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             super().do_GET()
 
     def do_POST(self):
-        if urlparse(self.path).path != '/api/add':
+        action = {'/api/add': add, '/api/private': add_private}.get(urlparse(self.path).path)
+        if not action:
             return self.send_json({'error': 'Unbekannt.'}, 404)
         try:
             length = int(self.headers.get('Content-Length', 0))
-            self.send_json(add(json.loads(self.rfile.read(length) or b'{}')))
+            self.send_json(action(json.loads(self.rfile.read(length) or b'{}')))
         except (ValueError, RuntimeError) as err:
             self.send_json({'error': str(err)}, 400)
 

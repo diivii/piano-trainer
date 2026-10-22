@@ -11,6 +11,7 @@ import { saveBackup, restoreBackup, lastBackup } from './backup.js';
 import * as storage from './storage.js';
 import { runPoints, repeatFactor, levelInfo, stars, starText } from './levels.js';
 import { DIFFICULTIES, RATING_VERSION, estimateDifficulty } from './difficulty.js';
+import { loadRepoConfig, saveRepoConfig, syncRepo } from './repo-sync.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -330,6 +331,12 @@ $('settings-open').addEventListener('click', () => {
   $('settings-dialog').querySelector('details').open = false;
   $('reset-status').hidden = true;
   resetLabel();
+  const repo = loadRepoConfig();
+  $('repo-name').value = repo.repo;
+  $('repo-token').value = repo.token;
+  repoStatus(repo.lastError
+    ? `Letzter Abgleich fehlgeschlagen: ${repo.lastError}`
+    : repo.lastSync ? `Zuletzt abgeglichen am ${formatDate(repo.lastSync)}.` : '');
   $('settings-dialog').showModal();
 });
 $('settings-close').addEventListener('click', () => $('settings-dialog').close());
@@ -352,6 +359,46 @@ $('reset-progress').addEventListener('click', async () => {
   $('reset-status').hidden = false;
   showLibrary();
 });
+
+// ---- Settings: pieces from a private GitHub repo (see repo-sync.js) ----
+
+function repoStatus(text) {
+  $('repo-status').textContent = text;
+  $('repo-status').hidden = !text;
+}
+
+const piecesText = (n) => (n === 1 ? '1 neues Stück' : `${n} neue Stücke`);
+
+$('repo-sync').addEventListener('click', async () => {
+  const config = {
+    ...loadRepoConfig(),
+    repo: $('repo-name').value.trim().replace(/^https:\/\/github\.com\//, '').replace(/\/$/, ''),
+    token: $('repo-token').value.trim(),
+  };
+  saveRepoConfig(config);
+  if (!config.repo) return repoStatus('Kein Repo eingetragen: es wird nichts abgeglichen.');
+  $('repo-sync').disabled = true;
+  repoStatus('Wird abgeglichen…');
+  try {
+    repoStatus(`Abgeglichen: ${piecesText(await syncRepo(config))}.`);
+    showLibrary();
+  } catch (err) {
+    repoStatus(`Abgleich fehlgeschlagen: ${err.message || err}`);
+    saveRepoConfig({ ...loadRepoConfig(), lastError: err.message || String(err) });
+  } finally {
+    $('repo-sync').disabled = false;
+  }
+});
+
+// On start, after the library shows; quietly, since the device may be offline.
+async function syncRepoInBackground() {
+  try {
+    if (await syncRepo() && !$('library-view').hidden) showLibrary();
+  } catch (err) {
+    console.warn('Repo sync failed:', err);
+    saveRepoConfig({ ...loadRepoConfig(), lastError: err.message || String(err) }); // shown in the settings
+  }
+}
 
 function openBackupDialog() {
   const last = lastBackup();
@@ -1090,3 +1137,4 @@ midi.connect();
 storage.requestPersistence();
 await ensureSamples();
 await showLibrary();
+syncRepoInBackground();

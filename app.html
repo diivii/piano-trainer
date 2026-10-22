@@ -175,6 +175,18 @@
         <h2>Einstellungen</h2>
         <button id="settings-close" class="icon-button" type="button" aria-label="Schließen">✕</button>
       </div>
+      <details class="repo-settings">
+        <summary>Eigene Stücke von GitHub</summary>
+        <p class="hint">
+          Alle Noten in einem privaten GitHub-Repo werden beim Öffnen der App automatisch importiert.
+          Der Zugangsschlüssel (ein „fine-grained token“ mit Lesezugriff auf „Contents“ nur dieses Repos)
+          bleibt auf diesem Gerät.
+        </p>
+        <label class="field">Repo <input id="repo-name" placeholder="name/repo" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+        <label class="field">Schlüssel <input id="repo-token" type="password" placeholder="github_pat_…" autocomplete="off"></label>
+        <button id="repo-sync" class="button" type="button">Speichern und abgleichen</button>
+        <p id="repo-status" class="hint"></p>
+      </details>
       <details class="danger-zone">
         <summary>Fortschritt zurücksetzen</summary>
         <p class="hint">

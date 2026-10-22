@@ -32,8 +32,12 @@ Live: https://diivii.github.io/piano-trainer/
 - **Hand colors**: key hints are green for the right hand, orange for the left;
   a hint fades out once played and lights up again for a repeated note
 - On a new level the app offers to save a backup (also after a looped section)
-- **Settings** (⚙ in the library): reset the selected person's progress
-  (behind a collapsed section and a second tap)
+- **Settings** (⚙ in the library): pieces from a private GitHub repo (see below),
+  reset the selected person's progress (behind a collapsed section and a second tap)
+- **Private pieces from GitHub**: every `.musicxml`/`.xml`/`.mxl` file in a private
+  repo is imported automatically when the app opens, for music that mustn't go on
+  the public site. Changed files update the piece (its history stays); files
+  deleted from the repo stay in the app, pieces deleted in the app don't come back
 - **Library**: imported pieces are stored on the device, with last practiced,
   number of runs, best accuracy and the bars with the most mistakes
 - **Sheet music** from MusicXML (`.musicxml`, `.xml`, `.mxl`), rendered with
@@ -73,9 +77,22 @@ With a local copy of PDMX in `../PDMX` (see `tools/pdmx.py`), double-click
 http://localhost:8020: search, preview the score with its estimated difficulty,
 give it a German title and add it. Adding commits and pushes just that piece,
 so it is on the live site about a minute later. `--no-push` only adds locally.
-"Herunterladen" saves the score as a `.musicxml` file instead (with the chosen
-title and composer inside) to import on the iPad with "+ Stück importieren":
-private to that device, never on the site.
+"Privat hochladen" puts the score (with the chosen title and composer inside)
+into the private pieces repo instead, see below. "Herunterladen" saves it as a
+`.musicxml` file to import on the iPad with "+ Stück importieren".
+
+## Private pieces
+
+Copyrighted or personal pieces go in a private GitHub repo (here
+`diivii/piano-pieces`, cloned next to the project as `../piano-pieces`), never in
+this public one. Put files into that folder and double-click its
+`Hochladen.cmd`, or use "Privat hochladen" in the catalog. The app imports new
+and changed files each time it opens (`js/repo-sync.js`, via the GitHub API).
+
+Setup on each device: create a fine-grained token on GitHub (Settings → Developer
+settings → Fine-grained tokens) with access to only that repo and the
+"Contents: Read-only" permission, then enter the repo name and token in the app
+under ⚙ → "Eigene Stücke von GitHub". The token stays in that browser's storage.
 
 Simulator keys: `A`–`'` white keys, `W E T Y U O P` black keys, `Z`/`X` octave,
 `Space` sustain pedal, hold `Shift` for loud notes.
@@ -120,6 +137,7 @@ Locally there's no `version.json` and files load unversioned ("lokal").
 | `js/player.js` | Plays a piece back (MIDI out to the piano, or a Web Audio synth) |
 | `js/storage.js` | Profiles, IndexedDB (pieces, runs), settings, backup import/export |
 | `js/backup.js` | Saving/restoring backup files (share sheet, download or clipboard) |
+| `js/repo-sync.js` | Imports pieces from a private GitHub repo when the app opens |
 | `js/library-view.js` | Library cards |
 | `js/keyboard-view.js` | On-screen 88-key piano |
 | `js/debug-panel.js` | MIDI event log |
@@ -128,6 +146,6 @@ Locally there's no `version.json` and files load unversioned ("lokal").
 | `tools/stamp_version.py` | Adds the version to imports and writes `version.json` (used when publishing) |
 | `tools/make_samples.py` | Generates the built-in arrangements and `samples/index.json` |
 | `tools/pdmx.py` | Piano catalog of a local PDMX copy (`../PDMX`): search it, add scores as samples |
-| `tools/catalog.py`, `tools/catalog.html` | Local search page for that catalog (preview, add and publish) |
+| `tools/catalog.py`, `tools/catalog.html` | Local search page for that catalog (preview, add and publish, or upload privately) |
 | `start-katalog.cmd` | Starts the search page |
 | `tools/originals.json` | The samples taken from PDMX, with their source file and license |

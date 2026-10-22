@@ -118,6 +118,15 @@ All built on 2026-10-19:
   Difficulty thresholds recalibrated (0–2 easy, 3–6 medium, 7+ hard; originals
   score 7–11); `RATING_VERSION` in `difficulty.js` makes stored ratings redo
   once (manual ones kept). Gymnopédie 1 and Träumerei had no good PDMX piano score.
+- Done (2026-10-22): private pieces from GitHub. `js/repo-sync.js` imports every
+  score in a private repo (`diivii/piano-pieces`, clone in `../piano-pieces` with
+  `Hochladen.cmd`) on app start; repo + read-only fine-grained token are entered
+  per device in ⚙ and stay in localStorage (never put a token in code). Piece ids
+  are `repo:<path>`; imported blob shas per repo in localStorage. The catalog's
+  "Privat hochladen" writes there and pushes. Tested with the public repo as
+  source; not yet confirmed on the iPad with the private repo and a token.
+  Copyrighted music (e.g. OMR results via Audiveris, installed on this PC) goes
+  there, never into `samples/`.
 - No known TODOs in the code.
 
 ## Ideas / next steps

@@ -261,8 +261,19 @@ kbd {
 .results-stars small { display: block; font-size: 0.85rem; letter-spacing: 0; color: var(--ok); font-weight: 600; margin-top: 0.2rem; }
 .button.danger { background: transparent; border-color: var(--err); color: var(--err); }
 .button.danger.confirm { background: var(--err); color: #fff; }
-.danger-zone summary { cursor: pointer; color: var(--muted); padding: 0.3rem 0; }
-.danger-zone[open] { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; }
+.danger-zone summary, .repo-settings summary { cursor: pointer; color: var(--muted); padding: 0.3rem 0; }
+.danger-zone[open], .repo-settings[open] { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; }
+.repo-settings .field { align-self: stretch; }
+.repo-settings .field input {
+  flex: 1;
+  min-height: var(--tap);
+  padding: 0 0.6rem;
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
 .level-dialog { width: min(420px, 92vw); overflow: hidden; } /* no scrollbar while the title pops */
 .level-dialog .debug { text-align: center; align-items: center; padding: 1.4rem; }
 .piece-card .delete {

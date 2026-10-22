@@ -91,12 +91,14 @@
         <span></span><span></span>
         <div class="actions">
           <button class="primary" id="add" type="submit">Zur Bibliothek hinzufügen</button>
+          <button id="private" type="button" title="Ins private GitHub-Repo: die App auf dem iPad holt es beim nächsten Öffnen">Privat hochladen</button>
           <button id="download" type="button" title="Nur für dieses iPad: Datei herunterladen und in der App über „Stück importieren“ öffnen">Herunterladen</button>
           <span class="facts" id="facts"></span>
         </div>
       </form>
-      <p class="facts">„Herunterladen“ speichert die Noten als Datei, ohne sie zu veröffentlichen. Auf dem iPad
-        in der App mit „+ Stück importieren“ öffnen; dann sind sie nur auf diesem Gerät.</p>
+      <p class="facts">„Privat hochladen“ legt die Noten ins private GitHub-Repo, nicht auf die öffentliche Seite;
+        die App auf dem iPad holt sie beim nächsten Öffnen. „Herunterladen“ speichert sie nur als Datei, zum
+        Importieren mit „+ Stück importieren“.</p>
       <p class="note">Zur Bibliothek nur alte Musik (Komponist seit über 70 Jahren tot). Manche Noten sind
         auf MuseScore fälschlich als gemeinfrei markiert, z. B. Film- oder Popmusik, die gehören nicht
         auf die öffentliche Seite. Solche Stücke lieber herunterladen.</p>
@@ -177,6 +179,7 @@ async function select(hit, li) {
   $('status').className = '';
   $('add').disabled = false;
   $('download').disabled = false;
+  $('private').disabled = false;
   $('add').textContent = hit.inLibrary ? 'Erneut hinzufügen (ersetzt)' : 'Zur Bibliothek hinzufügen';
   $('facts').textContent = '';
   $('score').classList.add('loading');
@@ -198,6 +201,7 @@ async function select(hit, li) {
     $('facts').textContent = `Diese Noten lassen sich nicht anzeigen: ${err.message || err}`;
     $('add').disabled = true;
     $('download').disabled = true;
+    $('private').disabled = true;
   } finally {
     if (token === loadToken) $('score').classList.remove('loading');
   }
@@ -245,6 +249,28 @@ $('download').addEventListener('click', async () => {
   setTimeout(() => URL.revokeObjectURL(link.href), 10000);
   $('status').className = 'ok';
   $('status').textContent = `„${link.download}“ ist im Download-Ordner. Aufs iPad bringen und in der App mit „+ Stück importieren“ öffnen.`;
+});
+
+// ---- Private repo (imported by the app on the iPad, never on the site) ----
+
+$('private').addEventListener('click', async () => {
+  if (!selected) return;
+  const title = $('title').value.trim() || selected.hit.title;
+  $('private').disabled = true;
+  $('status').className = '';
+  $('status').textContent = 'Wird ins private Repo hochgeladen…';
+  const xml = await (await fetch(`/api/score?mxl=${encodeURIComponent(selected.hit.mxl)}`)).text();
+  const res = await (await fetch('/api/private', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, xml: retitle(xml, title, $('composer').value.trim(), Number($('tempo').value) || null) }),
+  })).json();
+  $('private').disabled = false;
+  $('status').className = res.error ? 'error' : 'ok';
+  $('status').textContent = res.error
+    ?? (res.published
+      ? `„${title}“ ist im privaten Repo. Die App holt es beim nächsten Öffnen.`
+      : `„${res.file}“ liegt im privaten Ordner (nicht hochgeladen, --no-push).`);
 });
 
 // Puts the chosen title, composer and tempo into the file: the app takes

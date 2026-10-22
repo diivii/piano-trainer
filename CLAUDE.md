@@ -123,8 +123,8 @@ All built on 2026-10-19:
   `Hochladen.cmd`) on app start; repo + read-only fine-grained token are entered
   per device in ⚙ and stay in localStorage (never put a token in code). Piece ids
   are `repo:<path>`; imported blob shas per repo in localStorage. The catalog's
-  "Privat hochladen" writes there and pushes. Tested with the public repo as
-  source; not yet confirmed on the iPad with the private repo and a token.
+  "Privat hochladen" writes there and pushes. Confirmed working on the iPad
+  (2026-10-22). Easiest token setup: create it in Safari on the iPad, copy, paste.
   Copyrighted music (e.g. OMR results via Audiveris, installed on this PC) goes
   there, never into `samples/`.
 - No known TODOs in the code.
